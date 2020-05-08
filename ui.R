@@ -23,8 +23,12 @@ body <- dashboardBody(
                   ),
               # Map options
               box('Opções de Visualizações', width = 2,
-                  selectInput('year.ch', 'Qual ano gostaria de visualizar?',
+                  selectInput('year.ch', 'Qual ano gostaria de escolher?',
                               choices = c(2015, 2016), multiple = F),
+                  selectInput('crime.type', 'Que tipo de crime gostaria de visualizar no mapa?',
+                              choices = c('Todos os tipos', crime_types),
+                              selected = 'Todos os tipos',
+                              multiple = F),
                   actionButton('go_map.plot', 'Submeter')
                   )
             )

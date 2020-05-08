@@ -2,50 +2,50 @@ server <- function(input, output) {
   
   ########################### / INPUT / ############################
   ########################### MAP ##################################
-  # year_choosen <- eventReactive(input$go_map.plot,{
-  #   
-  #   res <- input$year.ch %>% as.character()
-  #   
-  #   return(res)
-  # })
+  ########################### *********** GEO-TAGGED DATA ##################################
   SP_data <- eventReactive(input$go_map.plot,{
-
+    # The geospatial data
     SP <- readRDS("data/SP.rds")
-    
+    # The year choosen
     ych <- input$year.ch
-    path.file <- paste('data/SPcrimetibble', ych, '.rds', sep = '')
+    # Type of crime choosen
+    typ.crime <- input$crime.type
+    
+    if(typ.crime == 'Todos os tipos'){
+      
+      path.file <- paste('data/SPcrimetibble', ych, '.rds', sep = '')
+      
+      # All crimes commited in the whole year
+      res.titulo <- paste('Número de Crimes em ', ych, sep = '')
+      
+    }else{
+      
+      path.file <- paste('data/SPcrimetibble', ych, typ.crime, '.rds', sep = '')
+      
+      # All of the selected crime commited in the whole year
+      res.titulo <- paste('Número do Crime Selecionado em ', ych, sep = '')
+      
+    }
+    # Retrieving dataframe choosen
     SPtibble <- readRDS(path.file)
+    # Merging with the geotag
+    res.data <- merge(SP, SPtibble)
     
-    res <- merge(SP, SPtibble)
-
-    return(res)
-  })
-  
-  y.choosen <- eventReactive(input$go_map.plot,{
-    
-    ych <- input$year.ch
-    
-    res <- paste('Número de Crimes em ', ych, sep = '')
-    
-    return(res)
+    return(list(df = res.data, col.df = res.titulo))
   })
   
   ########################### / OUTPUT / ############################
   ########################### MAP ##################################
   output$map.plot <- renderLeaflet({
     
-    SP <- readRDS("data/SP.rds")
+    SP <- SP_data()$df
+    zcol.ch <- SP_data()$col.df
+    print(head(SP))
+    print(zcol.ch)
     
-    ych <- input$year.ch
-    path.file <- paste('data/SPcrimetibble', ych, '.rds', sep = '')
-    SPtibble <- readRDS(path.file)
+    res <- mapview(SP, zcol = zcol.ch)
     
-    SP <- merge(SP, SPtibble)
-    
-    zcol.ch <- paste('Número de Crimes em ', ych, sep = '')
-    a <- mapview(SP, zcol = zcol.ch)
-    
-    return(a@map)
+    return(res@map)
   })
   
   

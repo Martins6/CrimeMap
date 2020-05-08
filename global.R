@@ -23,5 +23,8 @@ source('functions_app.R')
 ######################################### INPUT ###################################
 # GADM Geospatial data from GADM, mapping SP.
 sp.sf <- readRDS('data/SP.rds')
+crime_types <- readRDS('data/crime_types.rds')
+
+
 
 ######################################### OUTPUT ###################################
