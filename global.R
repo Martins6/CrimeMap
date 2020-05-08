@@ -21,5 +21,7 @@ library(rgdal)
 source('functions_app.R')
 
 ######################################### INPUT ###################################
+# GADM Geospatial data from GADM, mapping SP.
+sp.sf <- readRDS('data/SP.rds')
 
 ######################################### OUTPUT ###################################

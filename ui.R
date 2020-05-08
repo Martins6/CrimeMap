@@ -1,5 +1,5 @@
 ########################### / HEADER / #################################
-header <- dashboardHeader(title = "Crime Map - São Paulo")
+header <- dashboardHeader(title = "Crimes em SP")
 
 ########################## / SIDEBAR / #################################
 sidebar <- dashboardSidebar(
@@ -15,12 +15,18 @@ sidebar <- dashboardSidebar(
 body <- dashboardBody(
   tabItems(
     #####################  Map Section #####################
-    tabItem(tabName = "about",
+    tabItem(tabName = "map",
             
             fluidRow(
-              box('Map', width = 10
+              box('', width = 10,
+                  leafletOutput('map.plot')
+                  ),
+              # Map options
+              box('Opções de Visualizações', width = 2,
+                  selectInput('year.ch', 'Qual ano gostaria de visualizar?',
+                              choices = c(2015, 2016), multiple = F),
+                  actionButton('go_map.plot', 'Submeter')
                   )
-              
             )
      # End of the Map Section       
     ),
