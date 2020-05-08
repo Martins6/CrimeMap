@@ -1,53 +1,30 @@
-# title: Mapping Crime in the Great Region of Sao Paulo City (year of 2016)
+# title: Processing all the data and creating maps in the format of a tibble
 # author: Adriel Martins
 # date: 04/05/20
 # ************************************************************************* #
-# Libraries
-## Data manipulation
+# ***************** Libraries
+# Data manipulation
 library(tidyverse)
-## Spatial Data Manipulation
+# Spatial Data Manipulation
 library(sf)
 library(sp)
-## Plotting Data
 library(rgdal)
-library(leaflet)
-library(mapview)
-###################### ****************** Reading Data ######################
-# GADM Geospatial data from GADM, mapping the whole of Brazil
-brazil.sf <- readRDS('data_pre_processed/gadm36_BRA_3_sf.rds')
 
+# ******************* Reading Data
+# GADM Geospatial data from GADM, mapping SP.
+sp.sf <- readRDS('data/SP.rds')
+# Getting the paths for all our data-files
+all.crime.files <- list.files('/home/adriel_martins/Documents/CrimeMap/data_pre_processed/SSP')
 # Reading Data from the SSP, which was on Kaagle.
-#crime <- read_csv("data_pre_processed/SSPKaagle1.csv")
 crime <- read_csv("data_pre_processed/SSP/BO_2015.csv")
-###################### ****************** Initial Data Exploring ######################
-# # Understandig the geo-tag of our crime dataset
-# crime %>% 
-#   # Interpreting as double the lat-long coordinates, and month as integer
-#   mutate(Index = 1: n(),
-#          latitude = as.double(latitude),
-#          longitude = as.double(longitude),
-#          mes = as.integer(mes)) %>% 
-#   filter(is.na(latitude) | is.na(longitude)) %>% 
-#   summarise(WithoutLatLongCoord = n(),
-#             WithLatLongCoord = nrow(crime) - n(),
-#             PropWithout = WithoutLatLongCoord/nrow(crime),
-#             PropWith = WithLatLongCoord/nrow(crime))
-# # Cities where crime was recorded
-# crime %>% pull(cidade) %>% str_to_lower() %>% unique()
-# # Number of crimes in the city of Sao Paulo
-# crime %>% filter(cidade == 'S.PAULO') %>% nrow()
-# # Different types of crime in SP and their respective quantity
-# crime %>% group_by(rubrica) %>% summarise(Count = n())
-# crime$rubrica %>% unique()
-###################### ****************** Data Wrangling ######################
-# Filtering our Map of Brazil into the Map of the City of Sao Paulo.
-sp.sf <- brazil.sf %>%
-  filter(NAME_2 == 'São Paulo') %>%
-  select(NAME_3) %>% 
-  # Renaming
-  rename(Bairros = NAME_3)
+
+# *********** Fixed objects in the loop
 # Calculating bounding box for further wrangling
 boundbox.sp <- sp.sf$geometry %>% sf::as_Spatial() %>% bbox()
+# Loop
+
+
+
 
 # Storing the date of every year
 crime_ano <- crime$ANO_BO %>% unique() %>% .[1]
@@ -107,20 +84,3 @@ for(i in order_month){
 path.file <- paste('/home/adriel_martins/Documents/CrimeMap/data', 
                    '/', 'SPcrimetibble', crime_ano, '.rds', sep = '')
 SP %>% as_tibble() %>% select(-geometry) %>% write_rds(path.file)
-###################### ****************** Data Vizualisation ######################
-# Visualizing a sample of our crime data with their coordinates
-# crime %>%
-#   sample_n(100) %>% 
-#   leaflet() %>%
-#   addTiles() %>%
-#   addMarkers(lng = ~longitude, lat = ~latitude)
-
-# Visualizing Crime by Neighborhood, first attempt at a heatmap
-# pal = mapviewPalette("mapviewSpectralColors")
-# 
-# max.val <- max(SP$`Número de Crimes em 2015`)
-# min.val <- min(SP$`Número de Crimes em 2015`)
-# 
-# mapview(SP, zcol = 'Número de Crimes em 2015',
-#         col.regions = pal(n = 10), at = seq(min.val, max.val, l = 10))
-
