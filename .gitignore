@@ -1,0 +1,4 @@
+*.csv
+*.xslx
+*.zip
+data_pre_processed/*
