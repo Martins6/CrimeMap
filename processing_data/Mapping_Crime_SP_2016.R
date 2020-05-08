@@ -1,4 +1,4 @@
-# title: Mapping Crime in the Great Region of Sao Paulo City (year of 2016)
+# title: Mapping Crime in the Great Region of Sao Paulo City (year of 2016 and 2015)
 # author: Adriel Martins
 # date: 04/05/20
 # ************************************************************************* #
@@ -17,8 +17,7 @@ library(mapview)
 brazil.sf <- readRDS('data_pre_processed/gadm36_BRA_3_sf.rds')
 
 # Reading Data from the SSP, which was on Kaagle.
-#crime <- read_csv("data_pre_processed/SSPKaagle1.csv")
-crime <- read_csv("data_pre_processed/SSP/BO_2015.csv")
+crime <- read_csv("data_pre_processed/SSP/BO_2015.csv") # read_csv("data_pre_processed/BO_2016.csv")
 ###################### ****************** Initial Data Exploring ######################
 # # Understandig the geo-tag of our crime dataset
 # crime %>% 
@@ -116,6 +115,8 @@ SP %>% as_tibble() %>% select(-geometry) %>% write_rds(path.file)
 #   addMarkers(lng = ~longitude, lat = ~latitude)
 
 # Visualizing Crime by Neighborhood, first attempt at a heatmap
+# SP <- merge(SP, SPcrimetibble2015)
+# 
 # pal = mapviewPalette("mapviewSpectralColors")
 # 
 # max.val <- max(SP$`Número de Crimes em 2015`)
