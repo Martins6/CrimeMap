@@ -82,6 +82,7 @@ crime_sf$rubrica <- crime$rubrica
 crime_sf$mes <- crime$mes
 # Changing the name of our variable for plotting 
 SP <- sp.sf
+
 # Counting how many crimes happened in the year
 x <- paste('Número de Crimes em', crime_ano)
 SP$bairros_crime_n <- lengths(st_contains(SP, crime_sf))
