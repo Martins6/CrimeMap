@@ -38,10 +38,12 @@ server <- function(input, output) {
   ########################### MAP ##################################
   output$map.plot <- renderLeaflet({
     
+    # Options for the map
+    mapviewOptions(basemaps = c("CartoDB.Positron", "OpenStreetMap", "CartoDB.DarkMatter"))
+    
+    # Retrieving data
     SP <- SP_data()$df
     zcol.ch <- SP_data()$col.df
-    
-    pal = mapviewPalette("mapviewSpectralColors")
     
     res <- mapview(SP, zcol = zcol.ch,
             col.regions = c('blue', 'red'))
@@ -77,11 +79,52 @@ server <- function(input, output) {
       geom_path() +
       geom_point() +
       xlim(as.character(month(total.crime.by.month$`Mês`, label = T))) +
-      theme_wsj() +
+      theme_economist() +
       labs(x = 'Mês',
+           title = 'Quantidade do crime selecionado cometido ao longo do ano',
            y = '')
     
     return(total.crime.by.month.plot)
+    
+  })
+  ########################### STATS ##################################
+  output$rank_neigh <- renderPlotly({
+    
+    # # Taking total crime and by month of every neighborhood
+    # # SP <- SP_data()$df %>%
+    # #   as_tibble() %>% 
+    # #   select(-geometry) %>% 
+    # #   filter(Bairros == input$)
+    #   
+    # # Transforming into a matrix in order to perform the calculations that we wish to.
+    # SP <- SP %>% as_tibble() %>% select(-geometry) %>% as.matrix()
+    # one_vec <- rep(1, nrow(SP)) %>% as.matrix()
+    # 
+    # total.crime.by.month <- 
+    #   # Calculating
+    #   (t(one_vec) %*% SP) %>% 
+    #   as.vector() %>% 
+    #   # Transforming into a data-frame
+    #   enframe() %>% 
+    #   # Changing the name of the months
+    #   mutate(value = as.double(value),
+    #          name = as.integer(name)) %>%
+    #   rename(Mês = name,
+    #          Quantidade = value)
+    # 
+    # # Plotting
+    # total.crime.by.month.plot <- 
+    #   total.crime.by.month %>% 
+    #   ggplot(aes(x = `Mês`, y = Quantidade)) +
+    #   geom_path() +
+    #   geom_point() +
+    #   xlim(as.character(month(total.crime.by.month$`Mês`, label = T))) +
+    #   theme_economist() +
+    #   labs(x = 'Mês',
+    #        title = 'Quantidade do crime selecionado cometido ao longo do ano',
+    #        y = '')
+    # 
+    # return(total.crime.by.month.plot)
     
   })
   
