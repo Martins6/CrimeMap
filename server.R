@@ -40,14 +40,40 @@ server <- function(input, output) {
     
     SP <- SP_data()$df
     zcol.ch <- SP_data()$col.df
-    print(head(SP))
-    print(zcol.ch)
     
     res <- mapview(SP, zcol = zcol.ch)
     
     return(res@map)
   })
   
+  output$ts_map <- renderPlotly({
+    
+    # Taking just the crimes in each month by neighborhood
+    SP <- SP_data()$df[3:14]
+    # Transforming into a matrix in order to perform the calculations that we wish to.
+    SP <- SP %>% as_tibble() %>% select(-geometry) %>% as.matrix()
+    one_vec <- rep(1, nrow(SP)) %>% as.matrix()
+    
+    total.crime.by.month.plot <- 
+      # Calculating
+      (t(one_vec) %*% SP) %>% 
+      as.vector() %>% 
+      # Transforming into a data-frame
+      enframe() %>% 
+      # Changing the name of the months
+      mutate(name = lubridate::month(name, label = T),
+             value = as.double(value)) %>% 
+      # Plotting
+      ggplot(aes(x = name, y = value)) +
+      geom_point() +
+      geom_line(colour = 'black') +
+      theme_bw() +
+      labs(x = 'Mês',
+           y = '')
+    
+    return(total.crime.by.month.plot)
+    
+  })
   
 
   # End of the server function 

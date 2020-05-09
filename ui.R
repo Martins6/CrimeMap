@@ -1,5 +1,5 @@
 ########################### / HEADER / #################################
-header <- dashboardHeader(title = "Crimes em SP")
+header <- dashboardHeader(title = "CrimeMap: São Paulo")
 
 ########################## / SIDEBAR / #################################
 sidebar <- dashboardSidebar(
@@ -18,7 +18,7 @@ body <- dashboardBody(
     tabItem(tabName = "map",
             
             fluidRow(
-              box('', width = 10,
+              box('Visualização dos crimes por bairro em São Paulo', width = 10,
                   leafletOutput('map.plot')
                   ),
               # Map options
@@ -31,7 +31,16 @@ body <- dashboardBody(
                               multiple = F),
                   actionButton('go_map.plot', 'Submeter')
                   )
+            ),
+            
+            fluidRow(
+              
+              box('Série Temporal do tipo de crime selecionado', width = 12,
+                  plotlyOutput('ts_map')
+                  )
+              
             )
+            
      # End of the Map Section       
     ),
     
