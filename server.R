@@ -41,15 +41,19 @@ server <- function(input, output) {
     SP <- SP_data()$df
     zcol.ch <- SP_data()$col.df
     
-    res <- mapview(SP, zcol = zcol.ch)
+    pal = mapviewPalette("mapviewSpectralColors")
+    
+    res <- mapview(SP, zcol = zcol.ch,
+            col.regions = c('blue', 'red'))
     
     return(res@map)
   })
   
   output$ts_map <- renderPlotly({
     
+    col.name.aux <- SP_data()$col.df
     # Taking just the crimes in each month by neighborhood
-    SP <- SP_data()$df[3:14]
+    SP <- SP_data()$df %>% select(-(all_of(col.name.aux))) %>% select(-Bairros)
     # Transforming into a matrix in order to perform the calculations that we wish to.
     SP <- SP %>% as_tibble() %>% select(-geometry) %>% as.matrix()
     one_vec <- rep(1, nrow(SP)) %>% as.matrix()
@@ -73,7 +77,7 @@ server <- function(input, output) {
       geom_path() +
       geom_point() +
       xlim(as.character(month(total.crime.by.month$`Mês`, label = T))) +
-      theme_bw() +
+      theme_wsj() +
       labs(x = 'Mês',
            y = '')
     

@@ -11,11 +11,12 @@ library(lubridate)
 ## Spatial Data Manipulation
 library(sf)
 library(sp)
+library(rgdal)
 ## Plotting
 library(plotly)
 library(leaflet)
 library(mapview)
-library(rgdal)
+library(ggthemes)
 
 # Source functions
 source('functions_app.R')
@@ -23,7 +24,7 @@ source('functions_app.R')
 ######################################### INPUT ###################################
 # GADM Geospatial data from GADM, mapping SP.
 sp.sf <- readRDS('data/SP.rds')
-crime_types <- readRDS('data/crime_types.rds')
+crime_types <- readRDS('data/crime_types.rds') 
 
 
 
