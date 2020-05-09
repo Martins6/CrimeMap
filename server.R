@@ -54,19 +54,25 @@ server <- function(input, output) {
     SP <- SP %>% as_tibble() %>% select(-geometry) %>% as.matrix()
     one_vec <- rep(1, nrow(SP)) %>% as.matrix()
     
-    total.crime.by.month.plot <- 
+    total.crime.by.month <- 
       # Calculating
       (t(one_vec) %*% SP) %>% 
       as.vector() %>% 
       # Transforming into a data-frame
       enframe() %>% 
       # Changing the name of the months
-      mutate(name = lubridate::month(name, label = T),
-             value = as.double(value)) %>% 
-      # Plotting
-      ggplot(aes(x = name, y = value)) +
+      mutate(value = as.double(value),
+             name = as.integer(name)) %>%
+      rename(Mês = name,
+             Quantidade = value)
+    
+    # Plotting
+    total.crime.by.month.plot <- 
+      total.crime.by.month %>% 
+      ggplot(aes(x = `Mês`, y = Quantidade)) +
+      geom_path() +
       geom_point() +
-      geom_line(colour = 'black') +
+      xlim(as.character(month(total.crime.by.month$`Mês`, label = T))) +
       theme_bw() +
       labs(x = 'Mês',
            y = '')
