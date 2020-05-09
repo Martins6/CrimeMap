@@ -25,7 +25,7 @@ source('functions_app.R')
 # GADM Geospatial data from GADM, mapping SP.
 sp.sf <- readRDS('data/SP.rds')
 crime_types <- readRDS('data/crime_types.rds') 
-
+Bairros.choices <- sp.sf %>% as_tibble() %>% select(Bairros)
 
 
 ######################################### OUTPUT ###################################

@@ -116,7 +116,7 @@ server <- function(input, output) {
       xlim(as.character(month(total.crime.by.month$`Mês`, label = T))) +
       theme_economist() +
       labs(x = 'Mês',
-           title = 'Quantidade do crime selecionado cometido ao longo do ano',
+           title = 'Quantidade de crime cometido selecionado ao longo do ano',
            y = '')
     
     return(total.crime.by.month.plot)
@@ -137,13 +137,51 @@ server <- function(input, output) {
       # Plotting
       ggplot(aes(x = Bairros, y = Quant)) +
       geom_bar(stat="identity", width=.5, fill="tomato3") +
-      labs(title="Ranking dos Bairros") +
+      labs(title="") +
       theme_bw() +
       theme(axis.text.x = element_text(angle=65, vjust=0.6)) +
       labs(y = 'Número de Crimes Cometidos')
     
 
   })
+  ########################### *********** Time Series of the Crime in the Neighborhood ################
+  output$neighborhood_ts_plot <- renderPlotly({
+    
+    # Taking total crime and by month of every neighborhood
+    col_vec <- SP_data.stats()$df %>%
+      as_tibble() %>%
+      select(-geometry) %>%
+      select(-all_of(c(SP_data.stats()$col.df))) %>% 
+      filter(Bairros == input$neigh.ts.opt) %>% 
+      as.matrix() %>% 
+      as.vector()
+    
+    total.crime.by.month <- 
+      col_vec %>% 
+      # Transforming into a data-frame
+      enframe() %>% 
+      # Changing the name of the months
+      mutate(value = as.double(value),
+             name = as.integer(name)) %>%
+      rename(Mês = name,
+             Quantidade = value)
+    
+    # Plotting
+    total.crime.by.month.plot <- 
+      total.crime.by.month %>% 
+      ggplot(aes(x = `Mês`, y = Quantidade)) +
+      geom_path() +
+      geom_point() +
+      xlim(as.character(month(total.crime.by.month$`Mês`, label = T))) +
+      theme_economist() +
+      labs(x = 'Mês',
+           title = 'Quantidade do crime selecionado cometido ao longo do ano',
+           y = '')
+    
+    return(total.crime.by.month.plot)
+  })
+  
+  
   
 
   # End of the server function 
