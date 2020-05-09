@@ -133,11 +133,14 @@ server <- function(input, output) {
       select(all_of(c(SP_data.stats()$col.df, 'Bairros'))) %>% 
       `colnames<-`(c('Quant', 'Bairros')) %>% 
       dplyr::arrange(desc(Quant)) %>% 
-      mutate(Bairros = factor(Bairros, levels = .$Bairros)) %>% 
+      mutate(Bairros = factor(Bairros, levels = .$Bairros),
+             Rank = 1:n()) %>% 
       # Plotting
-      ggplot(aes(x = Bairros, y = Quant)) +
-      geom_bar(stat="identity", width=.5, fill="tomato3") +
+      ggplot() +
+      geom_bar(aes(x = Bairros, y = Quant), 
+               stat="identity", width=.5, fill="tomato3") +
       labs(title="") +
+      geom_point(aes(x = Bairros, y = Rank)) +
       theme_bw() +
       theme(axis.text.x = element_text(angle=65, vjust=0.6)) +
       labs(y = 'Número de Crimes Cometidos')
