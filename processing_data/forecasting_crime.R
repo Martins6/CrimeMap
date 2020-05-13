@@ -1,4 +1,4 @@
-# title: Processing all the data and creating maps in the format of a tibble
+# title: Probability Map!
 # author: Adriel Martins
 # date: 04/05/20
 # ************************************************************************* #
@@ -8,7 +8,6 @@ library(tidyverse)
 # Spatial Data Manipulation
 library(sp)
 library(sf)
-library(raster)
 library(rgdal)
 library(spatstat)
 library(maptools)
@@ -73,16 +72,17 @@ sp.sp@proj4string <- CRS('+proj=longlat +datum=WGS84 +no_defs')
 # 2) Divide each dimensions into h equal parts, creating h^2 squares, each square with s^2 units.
 # 3) Check if there is a crime into each square and atrribute one, if there is, and 0, if there isn't.
 # Call that variable Z.
-# 4) Create the variable C = count of crime into each square / s^2 units
-# 5) Fit the logistic model with GLMMM or GLGM to variable Y (assaulted, not assaulted).
+# 4) Fit the logistic model with GLMMM or GLGM to variable Y (assaulted, not assaulted).
+
+# ??? Create the variable C = count of crime into each square / s^2 units ???
 
 # The point object
 crime.ppp %>% summary()
 # The region object
 sp.sp %>% summary()
 
-# How many parts to divide the region?
-h <- 100
+# How many parts to divide the region in each dimension?
+h <- 10
 # Divinding the region into quadrat or 'little squares'
 qcount <- quadratcount(crime.ppp, nx = h, ny = h) %>% 
   as_tibble()
@@ -103,20 +103,19 @@ dt <- qcount %>%
          x = unlist(lapply(x, decomposing)),
          crime.event = if_else(n > 0,
                                1,
-                               0))
-
-#   mutate(crime.event = as.factor(crime.event))
-# 
-# dt$y %>% unique()
+                               0)) %>% 
+  select(-n)
 
 dt.aux <- dt %>% sample_n(100) 
-
-dt.aux$crime.event %>% hist()
+# dt.aux$crime.event %>% hist()
 # Fitting GLGM or GLMMM in a Spatial Statistics context
+t0 <- Sys.time()
 fit.glmm <- spaMM::fitme(crime.event ~ 1 + Matern(1|x + y),
                          data = dt.aux,
                          family = binomial(link = "logit"),
                          method = 'PQL/L')
+t1 <- Sys.time()
+print(t1 - t0)
 
 summary(fit.glmm)
 
@@ -138,9 +137,8 @@ names(pred_stack) <- c("x", "y")
 plot(pred_stack)
 
 
-predicted_prevalence_raster <- predict(pred_stack, fit.glmm)
-plot(predicted_prevalence_raster)
-lines(sp.sp)
-
-predicted_prevalence_raster_oromia <- mask(predicted_prevalence_raster, sp.sp)
+predicted_prevalence_raster <- raster::predict(pred_stack, fit.glmm)
+# plot(predicted_prevalence_raster)
+# lines(sp.sp)
+predicted_prevalence_raster_oromia <- raster::mask(predicted_prevalence_raster, sp.sp)
 plot(predicted_prevalence_raster_oromia)
