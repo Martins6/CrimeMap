@@ -66,6 +66,32 @@ server <- function(input, output) {
     
     return(list(df = res.data, col.df = res.titulo))
   })
+  ########################### RISK MODEL ####################################
+  ########################### *********** Probability Map ##################################
+  theft_data <- eventReactive(input$go.model, {
+    # Year choosen
+    ych <- input$year.ch.model
+    # Neighborhood choosen
+    neigh <- input$neigh.model
+    
+    # The geospatial data
+    SP <- readRDS("data/SP.rds") %>% 
+      filter(Bairros == neigh)
+    
+    # Calculating bounding box for the neighborhood choosen
+    boundbox.sp <- SP$geometry %>% sf::as_Spatial() %>% bbox()
+    
+    # Reading crime data from the especific choosen year
+    path.file <- paste('data/', ych, '_roubo_data.rds', sep = '')
+    crime <- readRDS(path.file)
+    
+    res <- crime %>% 
+      filter(between(latitude, boundbox.sp[2,1], boundbox.sp[2,2]) &
+               between(longitude, boundbox.sp[1,1], boundbox.sp[1,2]))
+    
+    return(res)
+  })
+  
   
   ########################### / OUTPUT / ############################
   ########################### MAP ##################################
@@ -116,7 +142,7 @@ server <- function(input, output) {
       xlim(as.character(month(total.crime.by.month$`Mês`, label = T))) +
       theme_economist() +
       labs(x = 'Mês',
-           title = 'Quantidade de crime cometido selecionado ao longo do ano',
+           #title = 'Quantidade de crime cometido selecionado ao longo do ano',
            y = '')
     
     return(total.crime.by.month.plot)
@@ -183,7 +209,8 @@ server <- function(input, output) {
     
     return(total.crime.by.month.plot)
   })
-  
+  ########################### RISK MODEL ####################################
+  ########################### *********** Probability Map ##################################
   
   
 

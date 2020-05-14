@@ -19,14 +19,14 @@ body <- dashboardBody(
             
             fluidRow(
               
-              box(title = 'Mapeamento dos Crimes', width = 10, solidHeader = T, footer = 'Fonte: SSP',
+              box(title = 'Mapeamento dos Crime', width = 10, solidHeader = T, footer = 'Fonte: SSP',
                   leafletOutput('map.plot')
                   ),
               # Map options
               box(title = 'Opções de Visualizações', width = 2, solidHeader = T,status = 'primary',
                   selectInput('year.ch', 'Qual ano gostaria de escolher?',
                               choices = c(2015, 2016), multiple = F),
-                  selectInput('crime.type', 'Que tipo de crime gostaria de visualizar no mapa?',
+                  selectInput('crime.type', 'Que tipo de crime gostaria de visualizar no mapa e gráfico abaixo?',
                               choices = c('Todos os tipos', crime_types),
                               selected = 'Todos os tipos',
                               multiple = F),
@@ -36,7 +36,7 @@ body <- dashboardBody(
             
             fluidRow(
               
-              box(title = 'Série Temporal dos Crimes', width = 12, footer = 'Fonte: SSP',
+              box(title = 'Série Temporal Anual do Crime', width = 12, footer = 'Fonte: SSP',
                   plotlyOutput('ts_map')
                   )
               
@@ -83,7 +83,25 @@ body <- dashboardBody(
     ),
     
     #####################  Modelling Section #####################
-    tabItem(tabName = "model"
+    tabItem(tabName = "model",
+            
+            fluidRow(
+              box(title = 'Mapeamento da probabilidade de assalto em determinado bairro', width = 10,
+                  renderPlot('map.prob')
+                  ),
+              box(title = 'Opções para a modelagem', width = 2, solidHeader = T, status = 'primary',
+                  selectInput('year.ch.model', 'Qual ano gostaria de escolher?',
+                              choices = c(2015, 2016), multiple = F),
+                  helpText('Para ter uma melhor compreensão dos parâmetros, por favor, consultar a aba "Sobre".'),
+                  selectInput('neigh.model', label = 'Qual bairro deseja modelar?',
+                              choices = sp.sf$Bairros, multiple = F),
+                  numericInput('h.model', 'Em quantos pedaços deseja dividir os lados do bairro?',
+                               value = 25, min = 10, max = 100),
+                  actionButton('go.model', 'Submeter')
+                  
+                  )
+              
+            )
             
       # End of the Stats Section       
     ),
