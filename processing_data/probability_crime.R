@@ -23,8 +23,7 @@ sp.sf <- brazil.sf %>%
   filter(NAME_2 == 'São Paulo') %>%
   select(NAME_3) %>% 
   # Renaming
-  rename(Bairros = NAME_3) %>%
-  filter(Bairros == 'Se')
+  rename(Bairros = NAME_3)
 
 # Calculating bounding box for further wrangling
 boundbox.sp <- sp.sf$geometry %>% sf::as_Spatial() %>% bbox()
@@ -74,20 +73,18 @@ sp.sp@proj4string <- CRS('+proj=longlat +datum=WGS84 +no_defs')
 # Call that variable Z.
 # 4) Fit the logistic model with GLMMM or GLGM to variable Y (assaulted, not assaulted).
 
-# ??? Create the variable C = count of crime into each square / s^2 units ???
-
 # The point object
 crime.ppp %>% summary()
 # The region object
 sp.sp %>% summary()
 
 # How many parts to divide the region in each dimension?
-h <- 10
+h <- 1000
 # Divinding the region into quadrat or 'little squares'
 qcount <- quadratcount(crime.ppp, nx = h, ny = h) %>% 
   as_tibble()
 
-qcount
+#qcount
 # adapting the tibble
 ## Auxiliary fun
 decomposing <- function(x){
@@ -98,19 +95,20 @@ decomposing <- function(x){
     first() %>%
     as.numeric()
 }
-dt <- qcount %>% 
+dt.aux <- qcount %>% 
+  sample_n(10000) %>% 
   mutate(y = unlist(lapply(y, decomposing)),
          x = unlist(lapply(x, decomposing)),
          crime.event = if_else(n > 0,
                                1,
                                0)) %>% 
   select(-n)
+dt.aux$crime.event %>% hist()
 
-dt.aux <- dt %>% sample_n(100) 
-# dt.aux$crime.event %>% hist()
+########################################### GLGM OR GLMM ####################################
 # Fitting GLGM or GLMMM in a Spatial Statistics context
 t0 <- Sys.time()
-fit.glmm <- spaMM::fitme(crime.event ~ 1 + Matern(1|x + y),
+fit.glmm <- spaMM::fitme(crime.event ~ 1 + x + y + Matern(1|x + y),
                          data = dt.aux,
                          family = binomial(link = "logit"),
                          method = 'PQL/L')
@@ -119,6 +117,31 @@ print(t1 - t0)
 
 summary(fit.glmm)
 
+resid(fit.glmm)^2 %>% sum()
+########################################### GLM + Geostatistic ####################################
+# Fitting GLM + Geostatistic
+fit.glm <- glm(crime.event ~ 1 + x + y,
+                         data = dt.aux,
+                         family = binomial(link = "logit"))
+
+fit.glm <- step(fit.glm)
+
+
+summary(fit.glm)
+resid(fit.glm)
+
+res.aux <- dt.aux %>% mutate(Resid = resid(fit.glm),
+                             Fitted = fitted(fit.glm))
+
+summary(fit.glm)
+resid(fit.glm) %>% abs() %>% sum()
+resid(fit.glm)^2 %>% sum()
+
+res.aux %>% 
+  ggplot() +
+  geom_point(aes(x = x, y = y, colour = Fitted))
+
+########################################### PLOTTING ####################################
 # Create an empty raster with the same extent and resolution as the bioclimatic layers
 latitude_raster <- longitude_raster <- raster::raster(nrows = 100,
                                               ncols = 100,
@@ -131,14 +154,13 @@ latitude_raster[] <- coordinates(latitude_raster)[,2]
 # Now create a final prediction stack of the 4 variables we need
 pred_stack <- raster::stack(longitude_raster,
                             latitude_raster)
-
 # Rename to ensure the names of the raster layers in the stack match those used in the model
 names(pred_stack) <- c("x", "y")
-plot(pred_stack)
+#plot(pred_stack)
 
-
-predicted_prevalence_raster <- raster::predict(pred_stack, fit.glmm)
+predicted_prevalence_raster <- raster::predict(pred_stack, fit.glm, type = 'response')
 # plot(predicted_prevalence_raster)
 # lines(sp.sp)
 predicted_prevalence_raster_oromia <- raster::mask(predicted_prevalence_raster, sp.sp)
 plot(predicted_prevalence_raster_oromia)
+

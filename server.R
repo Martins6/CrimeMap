@@ -69,6 +69,7 @@ server <- function(input, output) {
   ########################### RISK MODEL ####################################
   ########################### *********** Probability Map ##################################
   theft_data <- eventReactive(input$go.model, {
+    
     # Year choosen
     ych <- input$year.ch.model
     # Neighborhood choosen
@@ -78,17 +79,27 @@ server <- function(input, output) {
     SP <- readRDS("data/SP.rds") %>% 
       filter(Bairros == neigh)
     
-    # Calculating bounding box for the neighborhood choosen
+    # Calculating bounding box for further wrangling
     boundbox.sp <- SP$geometry %>% sf::as_Spatial() %>% bbox()
     
     # Reading crime data from the especific choosen year
     path.file <- paste('data/', ych, '_roubo_data.rds', sep = '')
     crime <- readRDS(path.file)
     
-    res <- crime %>% 
+    res1 <- crime %>% 
       filter(between(latitude, boundbox.sp[2,1], boundbox.sp[2,2]) &
                between(longitude, boundbox.sp[1,1], boundbox.sp[1,2]))
     
+    print('Hakuna Matata')
+    res1 %>% glimpse()
+    print('Isso é viver, é aprender!')
+    SP %>% glimpse()
+    
+    return(list(df = res1, sp.df = SP))
+  })
+  ########################### *** Number of squares ##################################
+  number_of_divisions <- eventReactive(input$go.model,{
+    res <- input$h.model
     return(res)
   })
   
@@ -211,7 +222,78 @@ server <- function(input, output) {
   })
   ########################### RISK MODEL ####################################
   ########################### *********** Probability Map ##################################
-  
+  output$map.prob <- renderPlot({
+    
+    # Let us put our crime dataset into a proper spatial format for point patterns
+    crime.sp <- theft_data()$df %>% select(longitude, latitude) %>% SpatialPoints()
+    crime.ppp <- crime.sp %>% maptools::as.ppp.SpatialPoints()
+    
+    # How many parts to divide the region in each dimension?
+    h <- number_of_divisions()
+
+    # Divinding the region into quadrat or 'little squares'
+    qcount <- spatstat::quadratcount(crime.ppp, nx = h, ny = h) %>% 
+      as_tibble()
+    
+    qcount %>% glimpse()
+    # adapting the tibble
+    ## Auxiliary fun
+    decomposing <- function(x){
+      x %>%
+        str_replace('\\[', replacement = '') %>%
+        strsplit(',') %>%
+        unlist() %>%
+        first() %>%
+        as.numeric()
+    }
+    dt <- qcount %>% 
+      mutate(y = unlist(lapply(y, decomposing)),
+             x = unlist(lapply(x, decomposing)),
+             crime.event = if_else(n > 0,
+                                   1,
+                                   0)) %>% 
+      select(-n)
+    
+    # For more speedy calculations, sampling to 100 squares
+    dt.aux <- dt %>% sample_n(100) 
+    # Fitting GLGM or GLMMM in a Spatial Statistics context
+    t0 <- Sys.time()
+    fit.glmm <- spaMM::fitme(crime.event ~ 1 + Matern(1|x + y),
+                             data = dt.aux,
+                             family = binomial(link = "logit"),
+                             method = 'PQL/L')
+    t1 <- Sys.time()
+    print(t1 - t0)
+    
+    # Adjusting the spatial setting for the plot
+    sp.sp <- theft_data()$sp.df %>% as_Spatial()
+    sp.sp@proj4string <- CRS('+proj=longlat +datum=WGS84 +no_defs')
+    
+    # Plotting the prob. map
+    
+    # Create an empty raster with the same extent and resolution as the bioclimatic layers
+    latitude_raster <- longitude_raster <- raster::raster(nrows = 100,
+                                                          ncols = 100,
+                                                          ext = raster::extent(sp.sp))
+    # Change the values to be latitude and longitude respectively
+    longitude_raster[] <- coordinates(longitude_raster)[,1]
+    latitude_raster[] <- coordinates(latitude_raster)[,2]
+    
+    # Now create a final prediction stack of the 2 variables we need
+    pred_stack <- raster::stack(longitude_raster,
+                                latitude_raster)
+    
+    # Rename to ensure the names of the raster layers in the stack match those used in the model
+    names(pred_stack) <- c("x", "y")
+    
+    # Predicting
+    predicted_prevalence_raster <- raster::predict(pred_stack, fit.glmm)
+    predicted_prevalence_raster_oromia <- raster::mask(predicted_prevalence_raster, sp.sp)
+    points(crime.ppp)
+    
+    plot(predicted_prevalence_raster_oromia)
+    
+  })
   
 
   # End of the server function 

@@ -87,7 +87,7 @@ body <- dashboardBody(
             
             fluidRow(
               box(title = 'Mapeamento da probabilidade de assalto em determinado bairro', width = 10,
-                  renderPlot('map.prob')
+                  plotOutput('map.prob')
                   ),
               box(title = 'Opções para a modelagem', width = 2, solidHeader = T, status = 'primary',
                   selectInput('year.ch.model', 'Qual ano gostaria de escolher?',
@@ -96,7 +96,7 @@ body <- dashboardBody(
                   selectInput('neigh.model', label = 'Qual bairro deseja modelar?',
                               choices = sp.sf$Bairros, multiple = F),
                   numericInput('h.model', 'Em quantos pedaços deseja dividir os lados do bairro?',
-                               value = 25, min = 10, max = 100),
+                               value = 10, min = 10, max = 100),
                   actionButton('go.model', 'Submeter')
                   
                   )
