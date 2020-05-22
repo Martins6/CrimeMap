@@ -5,8 +5,8 @@ header <- dashboardHeader(title = "Crimes em São Paulo")
 sidebar <- dashboardSidebar(
   sidebarMenu(
     menuItem("Mapa de São Paulo", tabName = "map"),
-    menuItem("Análise dos Bairros", tabName = "stats"),
-    menuItem("Modelagem de Risco de Assalto", tabName = "model"),
+    menuItem("Análise dos Bairros", tabName = "neighborhoods"),
+    menuItem("Modelagem de Risco de Assalto", tabName = "rob_model"),
     menuItem("Sobre", tabName = "about")
   )
 )
@@ -18,7 +18,7 @@ body <- dashboardBody(
     tabItem(tabName = "map",
             
             fluidRow(
-              
+              # Crime map plot
               box(title = 'Mapeamento dos Crime', width = 10, solidHeader = T, footer = 'Fonte: SSP',
                   leafletOutput('map.plot')
                   ),
@@ -35,7 +35,7 @@ body <- dashboardBody(
             ),
             
             fluidRow(
-              
+              # Time Series Plot
               box(title = 'Série Temporal Anual do Crime', width = 12, footer = 'Fonte: SSP',
                   plotlyOutput('ts_map')
                   )
@@ -45,26 +45,26 @@ body <- dashboardBody(
      # End of the Map Section       
     ),
     
-    #####################  Stats Section #####################
-    tabItem(tabName = "stats",
+    #####################  Neighborhood Section #####################
+    tabItem(tabName = "neighborhoods",
             
             fluidRow(
               
-              # Ranking of the best Neighborhoods
+              # Plot of the ranking of the best Neighborhoods
               box(title = 'Ranking dos Bairros', width = 10, solidHeader = T, footer = 'Fonte: SSP',
                   plotlyOutput('rank_neigh', height = '500px')
                   ),
               
               # Options
               box(title = 'Opções', width = 2, solidHeader = T, status = 'primary',
-                  selectInput('year.ch.stats', 'Qual ano gostaria de escolher?',
+                  selectInput('year.ch.neigh', 'Qual ano gostaria de escolher?',
                               choices = c(2015, 2016), multiple = F),
-                  selectInput('crime.type.stats', 'Que tipo de crime gostaria de visualizar no mapa?',
+                  selectInput('crime.type.neigh', 'Que tipo de crime gostaria de visualizar no mapa?',
                               choices = c('Todos os tipos', crime_types),
                               selected = 'Todos os tipos',
                               multiple = F),
                   #helpText('Não precisa re-submeter a opção de bairro, caso deseje ver outro bairro.'),
-                  actionButton('go_stats', 'Submeter')
+                  actionButton('go_neigh', 'Submeter')
               )
             ),
             
@@ -84,10 +84,11 @@ body <- dashboardBody(
       # End of the Stats Section       
     ),
     
-    #####################  Modelling Section #####################
-    tabItem(tabName = "model",
+    #####################  Robbery Modelling Section #####################
+    tabItem(tabName = "rob_model",
             
             fluidRow(
+              # Descriptive Risk
               box(title = 'Mapeamento do risco nos bairros', width = 10,
                   leafletOutput('map.risk')
                   ),

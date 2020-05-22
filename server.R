@@ -34,15 +34,15 @@ server <- function(input, output) {
     return(list(df = res.data, col.df = res.titulo))
   })
   
-  ########################### STATS ##################################
+  ########################### NEIGHBORHOODS ##################################
   ########################### *********** Geotagged Data ##################################
-  SP_data.stats <- eventReactive(input$go_stats,{
+  SP_data.neigh <- eventReactive(input$go_neigh,{
     # The geospatial data
     SP <- readRDS("data/SP.rds")
     # The year choosen
-    ych <- input$year.ch.stats
+    ych <- input$year.ch.neigh
     # Type of crime choosen
-    typ.crime <- input$crime.type.stats
+    typ.crime <- input$crime.type.neigh
     
     if(typ.crime == 'Todos os tipos'){
       
@@ -66,7 +66,7 @@ server <- function(input, output) {
     
     return(list(df = res.data, col.df = res.titulo))
   })
-  ########################### MUGGING (THEFT) RISK ####################################
+  ########################### ROBBERY RISK ####################################
   ########################### *********** Risk Map ##################################
   theft_map <- eventReactive(input$go.map.risk, {
     
@@ -191,15 +191,15 @@ server <- function(input, output) {
     return(total.crime.by.month.plot)
     
   })
-  ########################### STATS ##################################
+  ########################### NEIGHBORHOODS ##################################
   ########################### *********** Neighborhood Rank ##################################
   output$rank_neigh <- renderPlotly({
     
     # Taking total crime and by month of every neighborhood
-    SP_data.stats()$df %>%
+    SP_data.neigh()$df %>%
       as_tibble() %>%
       select(-geometry) %>%
-      select(all_of(c(SP_data.stats()$col.df, 'Bairros'))) %>% 
+      select(all_of(c(SP_data.neigh()$col.df, 'Bairros'))) %>% 
       `colnames<-`(c('Quant', 'Bairros')) %>% 
       dplyr::arrange(desc(Quant)) %>% 
       mutate(Bairros = factor(Bairros, levels = .$Bairros),
@@ -220,10 +220,10 @@ server <- function(input, output) {
   output$neighborhood_ts_plot <- renderPlotly({
     
     # Taking total crime and by month of every neighborhood
-    col_vec <- SP_data.stats()$df %>%
+    col_vec <- SP_data.neigh()$df %>%
       as_tibble() %>%
       select(-geometry) %>%
-      select(-all_of(c(SP_data.stats()$col.df))) %>% 
+      select(-all_of(c(SP_data.neigh()$col.df))) %>% 
       filter(Bairros == input$neigh.ts.opt) %>% 
       as.matrix() %>% 
       as.vector()
@@ -241,9 +241,6 @@ server <- function(input, output) {
              Quantidade = value) %>% 
       drop_na()
     
-    print(total.crime.by.month$`Mês`)
-    print(month(total.crime.by.month$`Mês`, label = T))
-    
     # Plotting
     total.crime.by.month.plot <- 
       total.crime.by.month %>% 
@@ -258,7 +255,7 @@ server <- function(input, output) {
     
     return(total.crime.by.month.plot)
   })
-  ########################### MUGGING RISK ####################################
+  ########################### ROBBERY RISK ####################################
   ########################### *********** Risk Map ##################################
   output$map.risk <- renderLeaflet({
     
