@@ -6,7 +6,7 @@ sidebar <- dashboardSidebar(
   sidebarMenu(
     menuItem("Mapa de São Paulo", tabName = "map"),
     menuItem("Análise dos Bairros", tabName = "stats"),
-    menuItem("Modelagem de Risco", tabName = "model"),
+    menuItem("Modelagem de Risco de Assalto", tabName = "model"),
     menuItem("Sobre", tabName = "about")
   )
 )
@@ -63,19 +63,21 @@ body <- dashboardBody(
                               choices = c('Todos os tipos', crime_types),
                               selected = 'Todos os tipos',
                               multiple = F),
-                  helpText('Não precisa re-submeter a opção de bairro, caso deseje ver outro bairro.'),
-                  selectInput('neigh.ts.opt', 'Qual bairro gostaria de ver a série no tempo?',
-                              choices = Bairros.choices,
-                              multiple = F),
+                  #helpText('Não precisa re-submeter a opção de bairro, caso deseje ver outro bairro.'),
                   actionButton('go_stats', 'Submeter')
               )
             ),
             
             fluidRow(
               # Time Series of the crime in the specific Neighborhood choosen
-              box(title = 'Série temporal do Crime Selecionado no Bairro Escolhido',
-                  width = 12, solidHeader = T, footer = 'Fonte: SSP',
+              box(title = 'Série temporal do Crime no Bairro',
+                  width = 10, solidHeader = T, footer = 'Fonte: SSP',
                   plotlyOutput('neighborhood_ts_plot')
+                  ),
+              box(title = 'Escolha um bairro', width = 2, solidHeader = T, status = 'primary',
+                  selectInput('neigh.ts.opt', 'Qual bairro gostaria de ver a série no tempo?',
+                              choices = Bairros.choices,
+                              multiple = F)
                   )
             )
             
@@ -86,19 +88,13 @@ body <- dashboardBody(
     tabItem(tabName = "model",
             
             fluidRow(
-              box(title = 'Mapeamento da probabilidade de assalto em determinado bairro', width = 10,
-                  plotOutput('map.prob')
+              box(title = 'Mapeamento do risco nos bairros', width = 10,
+                  leafletOutput('map.risk')
                   ),
-              box(title = 'Opções para a modelagem', width = 2, solidHeader = T, status = 'primary',
-                  selectInput('year.ch.model', 'Qual ano gostaria de escolher?',
+              box(title = 'Opções para visualização', width = 2, solidHeader = T, status = 'primary',
+                  selectInput('year.ch.risk', 'Qual ano gostaria de escolher?',
                               choices = c(2015, 2016), multiple = F),
-                  helpText('Para ter uma melhor compreensão dos parâmetros, por favor, consultar a aba "Sobre".'),
-                  selectInput('neigh.model', label = 'Qual bairro deseja modelar?',
-                              choices = sp.sf$Bairros, multiple = F),
-                  numericInput('h.model', 'Em quantos pedaços deseja dividir os lados do bairro?',
-                               value = 10, min = 10, max = 100),
-                  actionButton('go.model', 'Submeter')
-                  
+                  actionButton('go.map.risk', 'Submeter')
                   )
               
             )

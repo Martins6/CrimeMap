@@ -66,18 +66,21 @@ server <- function(input, output) {
     
     return(list(df = res.data, col.df = res.titulo))
   })
-  ########################### RISK MODEL ####################################
-  ########################### *********** Probability Map ##################################
-  theft_data <- eventReactive(input$go.model, {
+  ########################### MUGGING (THEFT) RISK ####################################
+  ########################### *********** Risk Map ##################################
+  theft_map <- eventReactive(input$go.map.risk, {
     
     # Year choosen
-    ych <- input$year.ch.model
-    # Neighborhood choosen
-    neigh <- input$neigh.model
+    ych <- input$year.ch.risk
     
     # The geospatial data
-    SP <- readRDS("data/SP.rds") %>% 
-      filter(Bairros == neigh)
+    SP <- readRDS("data/SP.rds")
+    # Also transforming the desired region
+    sp.sp <- SP %>% as_Spatial()
+    sp.sp@proj4string <- CRS('+proj=longlat +datum=WGS84 +no_defs')
+    zone <- 23
+    sp.sp <- spTransform(sp.sp, CRS(paste("+proj=utm +zone=",zone,"+datum=WGS84", sep = '')))
+    SP <- sp.sp %>% st_as_sf()
     
     # Calculating bounding box for further wrangling
     boundbox.sp <- SP$geometry %>% sf::as_Spatial() %>% bbox()
@@ -85,24 +88,53 @@ server <- function(input, output) {
     # Reading crime data from the especific choosen year
     path.file <- paste('data/', ych, '_roubo_data.rds', sep = '')
     crime <- readRDS(path.file)
+    # Let us put our crime dataset into a proper spatial format for point patterns
+    crime.sp <- crime %>% select(longitude, latitude) %>% SpatialPoints()
+    crime.sp@proj4string <- CRS('+proj=longlat +datum=WGS84 +no_defs')
+    # Transforming to UTM coordinates
+    zone <- 23
+    crime.sp <- spTransform(crime.sp, CRS(paste("+proj=utm +zone=",zone,"+datum=WGS84", sep = '')))
+    crime.sf <- crime.sp %>% st_as_sf()
     
-    res1 <- crime %>% 
-      filter(between(latitude, boundbox.sp[2,1], boundbox.sp[2,2]) &
-               between(longitude, boundbox.sp[1,1], boundbox.sp[1,2]))
+    # Collecting the population of the municipalities in Sao Paulo
+    webpage <- read_html('https://pt.wikipedia.org/wiki/Lista_dos_distritos_de_S%C3%A3o_Paulo_por_popula%C3%A7%C3%A3o')
     
-    print('Hakuna Matata')
-    res1 %>% glimpse()
-    print('Isso é viver, é aprender!')
-    SP %>% glimpse()
+    municip_html <- html_nodes(x = webpage, 'table.wikitable tbody tr td:nth-child(2) a')
+    municip_name_data <- html_text(municip_html)
+    pop_html <- html_nodes(x = webpage, 'table.wikitable tbody tr td:nth-child(3)')
+    pop_data <- html_text(pop_html)
     
-    return(list(df = res1, sp.df = SP))
+    # Joining them in a tibble
+    cleaning_bairros <- function(x){
+      
+      a <- stringi::stri_trans_general(str = x, 
+                                       id = "Latin-ASCII")
+      b <- str_to_lower(a)
+      d <- str_squish(b)
+      return(d)
+    }
+    
+    munic_pop <- tibble(Bairros = municip_name_data,
+                        Pop = pop_data) %>% 
+      mutate(Bairros = cleaning_bairros(Bairros),
+             Pop = 1000 * as.double(str_replace(Pop, '\n', '')))
+    
+    # Correcting some mistakes in the spatial data
+    SP[10,1] <- 'Brasilândia'
+    SP[76,1] <- 'São Miguel Paulista'
+    SP[55,1] <- 'Bom Retiro'
+
+    hey <- st_contains(SP, crime.sf) %>% 
+      lengths()
+    SP <- SP %>% 
+      mutate(Crime.count = hey,
+             Bairros = cleaning_bairros(Bairros)) %>% 
+      full_join(munic_pop) %>% 
+      mutate(Risco = Crime.count/(Pop - Crime.count)) %>% 
+      mutate(Risco = round(Risco, digit = 3))
+    
+    return(SP)
   })
-  ########################### *** Number of squares ##################################
-  number_of_divisions <- eventReactive(input$go.model,{
-    res <- input$h.model
-    return(res)
-  })
-  
   
   ########################### / OUTPUT / ############################
   ########################### MAP ##################################
@@ -151,7 +183,7 @@ server <- function(input, output) {
       geom_path() +
       geom_point() +
       xlim(as.character(month(total.crime.by.month$`Mês`, label = T))) +
-      theme_economist() +
+      theme_bw() + #theme_economist() +
       labs(x = 'Mês',
            #title = 'Quantidade de crime cometido selecionado ao longo do ano',
            y = '')
@@ -196,6 +228,8 @@ server <- function(input, output) {
       as.matrix() %>% 
       as.vector()
     
+    col_vec <- col_vec[-1]
+    
     total.crime.by.month <- 
       col_vec %>% 
       # Transforming into a data-frame
@@ -204,7 +238,11 @@ server <- function(input, output) {
       mutate(value = as.double(value),
              name = as.integer(name)) %>%
       rename(Mês = name,
-             Quantidade = value)
+             Quantidade = value) %>% 
+      drop_na()
+    
+    print(total.crime.by.month$`Mês`)
+    print(month(total.crime.by.month$`Mês`, label = T))
     
     # Plotting
     total.crime.by.month.plot <- 
@@ -213,85 +251,21 @@ server <- function(input, output) {
       geom_path() +
       geom_point() +
       xlim(as.character(month(total.crime.by.month$`Mês`, label = T))) +
-      theme_economist() +
+      theme_bw() + #theme_economist() +
       labs(x = 'Mês',
-           title = 'Quantidade do crime selecionado cometido ao longo do ano',
+           #title = 'Quantidade do crime selecionado cometido ao longo do ano',
            y = '')
     
     return(total.crime.by.month.plot)
   })
-  ########################### RISK MODEL ####################################
-  ########################### *********** Probability Map ##################################
-  output$map.prob <- renderPlot({
+  ########################### MUGGING RISK ####################################
+  ########################### *********** Risk Map ##################################
+  output$map.risk <- renderLeaflet({
     
-    # Let us put our crime dataset into a proper spatial format for point patterns
-    crime.sp <- theft_data()$df %>% select(longitude, latitude) %>% SpatialPoints()
-    crime.ppp <- crime.sp %>% maptools::as.ppp.SpatialPoints()
+    res <- theft_map() %>%
+      mapview(zcol = 'Risco', pop = theft_map()$Bairros)
     
-    # How many parts to divide the region in each dimension?
-    h <- number_of_divisions()
-
-    # Divinding the region into quadrat or 'little squares'
-    qcount <- spatstat::quadratcount(crime.ppp, nx = h, ny = h) %>% 
-      as_tibble()
-    
-    qcount %>% glimpse()
-    # adapting the tibble
-    ## Auxiliary fun
-    decomposing <- function(x){
-      x %>%
-        str_replace('\\[', replacement = '') %>%
-        strsplit(',') %>%
-        unlist() %>%
-        first() %>%
-        as.numeric()
-    }
-    dt <- qcount %>% 
-      mutate(y = unlist(lapply(y, decomposing)),
-             x = unlist(lapply(x, decomposing)),
-             crime.event = if_else(n > 0,
-                                   1,
-                                   0)) %>% 
-      select(-n)
-    
-    # For more speedy calculations, sampling to 100 squares
-    dt.aux <- dt %>% sample_n(100) 
-    # Fitting GLGM or GLMMM in a Spatial Statistics context
-    t0 <- Sys.time()
-    fit.glmm <- spaMM::fitme(crime.event ~ 1 + Matern(1|x + y),
-                             data = dt.aux,
-                             family = binomial(link = "logit"),
-                             method = 'PQL/L')
-    t1 <- Sys.time()
-    print(t1 - t0)
-    
-    # Adjusting the spatial setting for the plot
-    sp.sp <- theft_data()$sp.df %>% as_Spatial()
-    sp.sp@proj4string <- CRS('+proj=longlat +datum=WGS84 +no_defs')
-    
-    # Plotting the prob. map
-    
-    # Create an empty raster with the same extent and resolution as the bioclimatic layers
-    latitude_raster <- longitude_raster <- raster::raster(nrows = 100,
-                                                          ncols = 100,
-                                                          ext = raster::extent(sp.sp))
-    # Change the values to be latitude and longitude respectively
-    longitude_raster[] <- coordinates(longitude_raster)[,1]
-    latitude_raster[] <- coordinates(latitude_raster)[,2]
-    
-    # Now create a final prediction stack of the 2 variables we need
-    pred_stack <- raster::stack(longitude_raster,
-                                latitude_raster)
-    
-    # Rename to ensure the names of the raster layers in the stack match those used in the model
-    names(pred_stack) <- c("x", "y")
-    
-    # Predicting
-    predicted_prevalence_raster <- raster::predict(pred_stack, fit.glmm)
-    predicted_prevalence_raster_oromia <- raster::mask(predicted_prevalence_raster, sp.sp)
-    points(crime.ppp)
-    
-    plot(predicted_prevalence_raster_oromia)
+    return(res@map)
     
   })
   
