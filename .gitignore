@@ -3,3 +3,4 @@
 *.zip
 data_pre_processed/*
 data/*
+.Rproj.user

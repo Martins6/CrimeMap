@@ -104,7 +104,7 @@ munic_pop <- tibble(Bairros = municip_name_data,
          Pop = 1000 * as.double(str_replace(Pop, '\n', '')))
 
 sp.sf[10,1] <- 'Brasilândia'
-sp.sf[76,1] <- 'São Miguel Paulista'
+  sp.sf[76,1] <- 'São Miguel Paulista'
 sp.sf[55,1] <- 'Bom Retiro'
 
 

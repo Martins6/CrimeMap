@@ -119,11 +119,6 @@ server <- function(input, output) {
       mutate(Bairros = cleaning_bairros(Bairros),
              Pop = 1000 * as.double(str_replace(Pop, '\n', '')))
     
-    # Correcting some mistakes in the spatial data
-    SP[10,1] <- 'Brasilândia'
-    SP[76,1] <- 'São Miguel Paulista'
-    SP[55,1] <- 'Bom Retiro'
-
     hey <- st_contains(SP, crime.sf) %>% 
       lengths()
     SP <- SP %>% 
@@ -149,7 +144,7 @@ server <- function(input, output) {
     zcol.ch <- SP_data()$col.df
     
     res <- mapview(SP, zcol = zcol.ch,
-            col.regions = c('blue', 'red'))
+            col.regions = c('green', 'blue', 'red'), pop = SP$Bairros)
     
     return(res@map)
   })
@@ -260,7 +255,9 @@ server <- function(input, output) {
   output$map.risk <- renderLeaflet({
     
     res <- theft_map() %>%
-      mapview(zcol = 'Risco', pop = theft_map()$Bairros)
+      mapview(zcol = 'Risco',
+              col.regions = c('green', 'blue', 'red'),
+              pop = theft_map()$Bairros)
     
     return(res@map)
     
