@@ -81,32 +81,7 @@ crime.ppp %>% summary()
 # # The region object
 sp.sp %>% summary()
 
-# How many parts to divide the region in each dimension?
-h <- 100
-# Divinding the region into quadrat or 'little squares'
-qcount <- quadratcount(crime.ppp, nx = h, ny = h) %>% 
-  as_tibble()
-
-qcount
-
-# adapting the tibble
-## Auxiliary fun
-decomposing <- function(x){
-  x %>%
-    str_replace('\\[', replacement = '') %>%
-    strsplit(',') %>%
-    unlist() %>%
-    first() %>%
-    as.numeric()
-}
-dt.aux <- qcount %>% 
-  #sample_n(1000) %>% 
-  mutate(y = unlist(lapply(y, decomposing)),
-         x = unlist(lapply(x, decomposing)),
-         crime.event = if_else(n > 0,
-                               1,
-                               0)) %>% 
-  select(-n)
+dt.aux <- readRDS('data/crime_by_square/squares_500.rds')
 
 dt.aux$crime.event %>% hist()
 
@@ -126,53 +101,69 @@ yes.cr %>% summary()
 no.cr %>% summary()
 
 plot(no.cr)
+plot(yes.cr)
 
 # Kernel Density smoothing
-#bw.diggle(crime.ppp) %>% plot()
+## Diggle bandwith
 a1 <- density(yes.cr, sigma = bw.diggle)
+a1.1 <- a1
 a2 <- density(no.cr, sigma = bw.diggle)
-
-
 
 a1 %>% plot()
 points(yes.cr)
 
 z1 <- (a1$v)/(a1$v + a2$v)
-a1$v <- z1
-a1 %>% plot()
+a1.1$v <- z1
+a1.1 %>% plot()
 
-b1 <- adaptive.density(yes.cr, f=0.1, nrep=10)
-b2 <- adaptive.density(no.cr, f=0.1, nrep=10)
+## Spatial Adaptive Density
+b1 <- adaptive.density(yes.cr, f=0.05, nrep=5)
+b2 <- adaptive.density(no.cr, f=0.05, nrep=5)
+b1.1 <- b1
 b1 %>% plot()
 b2 %>% plot()
 
 
 z2 <- (b1$v)/(b1$v + b2$v)
-b1$v <- z2
-b1 %>% plot()
+b1.1$v <- z2
+b1.1 %>% plot()
 
 z2 %>% dim()
 
+# Raster Plot
+# Create an empty raster with the same extent and resolution as the Sao Paulo region
+predicted_raster <- raster::raster(nrows = nrow(z1),
+                             ncols = ncol(z1),
+                             ext = raster::extent(sp.sp))
+# For some reason, the raster takes the inverse order of rows
+predicted_raster[] <- z1[nrow(z1):1,]
+plot(predicted_raster)
+predicted_raster_in_map <- raster::mask(predicted_raster, sp.sp)
+plot(predicted_raster_in_map)
+
 # 3d plot
-fig <- plotly::plot_ly(z = ~z2)
+plot.tibble <- tibble(Mapa = predicted_raster_in_map@data@values %>% as.vector(),
+                      x = coordinates(predicted_raster_in_map)[,1],
+                      y = coordinates(predicted_raster_in_map)[,2])
+## Normal plot
+gg = plot.tibble %>% 
+  drop_na() %>% 
+  ggplot(aes(x = x, y = y)) +
+  geom_raster(aes(fill = Mapa)) +
+  theme_bw()
+
+## Rayshader
+library(rayshader)
+
+plot_gg(gg, multicore = TRUE, width = 6, height=6, fov = 70)
+render_depth(focallength=100,focus=0.72)
+
+## Plotly
+plotly.matrix <- matrix(data = as.vector(plot.tibble$Mapa), nrow(z2), ncol(z2))
+fig <- plotly::plot_ly(z = ~ plotly.matrix)
 fig <- fig %>% plotly::add_surface()
 fig
 
-# Raster Plot
-# Create an empty raster with the same extent and resolution as the bioclimatic layers
-emp_raster <- raster::raster(nrows = nrow(z2),
-                             ncols = ncol(z2),
-                             ext = raster::extent(sp.sp))
-#emp_raster <- coordinates(emp_raster)
-fil_raster@file@toptobottom <- TRUE
-fil_raster <- raster::setValues(x = emp_raster, z2)
-
-plot(fil_raster)
-
-
-z2
-sp.sf %>%  ggplot() +
-  geom_sf() 
 
 ########################################## BIVAND METHOD ##########################################
 # Following first the example of Bivand

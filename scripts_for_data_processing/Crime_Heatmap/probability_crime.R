@@ -31,72 +31,80 @@ sp.sp@proj4string <- CRS('+proj=longlat +datum=WGS84 +no_defs')
 # zone <- 23
 # sp.sp <- spTransform(sp.sp, CRS(paste("+proj=utm +zone=",zone,"+datum=WGS84", sep = '')))
 
-dt.aux <- read_rds('data/crime_by_square/squares_100.rds')
+# Reading our square map
+dt.aux <- read_rds('data/crime_by_square/squares_100.rds') 
 dt.aux$crime.event %>% hist()
+dt.aux %>% 
+  ggplot() +
+  geom_tile(aes(x, y, fill = crime.event))
 
 ########################################### GLGM OR GLMM ####################################
 # # # Fitting GLGM or GLMMM in a Spatial Statistics context
-# t0 <- Sys.time()
-# fit.glmm <- spaMM::fitme(crime.event ~ 1 + x + y + Matern(1|x + y),
-#                          data = dt.aux,
-#                          family = binomial(link = "logit"),
-#                          method = 'PQL/L')
-# t1 <- Sys.time()
-# print(t1 - t0)
-# 
-# summary(fit.glmm)
-# 
-# resid(fit.glmm)^2 %>% sum()
-########################################### GLM + Geostatistic ####################################
-# ############## ************* GLM #############
-dt.aux <- read_rds('data_processed.rds') %>% 
-  sample_frac(0.75) 
-# Fitting GLM + Geostatistic
-fit.glm <- glm(crime.event ~ 1,
-                         data = dt.aux,
-                         family = binomial(link = "logit"))
-fit.glm <- step(fit.glm)
-summary(fit.glm)
-res.aux <- dt.aux %>% mutate(Resid = dt.aux$crime.event - fitted(fit.glm),
-                             Fitted = fitted(fit.glm))
+dt.fit <- dt.aux %>% sample_n(100)
+t0 <- Sys.time()
+fit.glmm <- spaMM::fitme(crime.event ~ 1 + Matern(1|x + y),
+                         data = dt.fit,
+                         family = binomial(link = "logit"),
+                         method = 'PQL/L')
+t1 <- Sys.time()
+print(t1 - t0)
+fitted_vec <- as.vector(predict(fit.glmm, newdata = hello))
 
-res.aux$Resid %>% abs() %>% mean()
-res.aux$Resid^2 %>% mean()
+summary(fit.glmm)
+resid(fit.glmm)^2 %>% sum()
 
 res.aux %>%
   ggplot() +
   geom_point(aes(x = x, y = y, colour = Resid)) +
   scale_colour_gradient(low = 'green', high = 'red')
 
-# ############## ************* Covariance Model #############
-source('/home/adriel_martins/Documents/rcodes/[R]Spatial_Codes/Geostatistics/my_codes/Kriging.R')
-source('/home/adriel_martins/Documents/rcodes/[R]Spatial_Codes/Geostatistics/my_codes/Variogram_Geodesic_Fitting_Function.R')
-source('/home/adriel_martins/Documents/rcodes/[R]Spatial_Codes/Geostatistics/my_codes/LongLat_UTM.R')
-
-oz <-
-  res.aux %>%
-  rename(value = Resid,
-         lat = x,
-         long = y) %>%
-  select(lat, long, value)
-
-# Transforming to SpatialDataFrame
-oz.gstat <- oz %>% `coordinates<-`(c('long', 'lat'))
-oz.gstat <- LongLatToUTM(sp_dt = oz.gstat, zone = 23)
-# Transforming to UTM coord
-oz.utm <- cbind(oz.gstat@coords, oz.gstat@data) %>%
-  as_tibble() %>% 
-  rename(x = lat,
-         y = long)
-oz.geo <- oz.utm %>%
-  as.geodata()
-
-# Variogram Modelling
-dist(dt.aux[c('x','y')])
-
-# Our empirical variogram
-v <- variogram(value ~ 1, oz.gstat)
-
+dt.aux %>%
+  mutate(fitted_val = fitted_vec) %>% 
+  ggplot() +
+  geom_tile(aes(x,y, fill = fitted_val))
+# ########################################### GLM + Geostatistic - Boosting ###############################
+# dt.fit <- dt.aux %>% sample_n(100)
+# ############### ************* GLM #############
+# # Fitting GLM + Geostatistic
+# fit.glm <- glm(crime.event ~ 1,
+#                          data = dt.aux,
+#                          family = binomial(link = "logit"))
+# fit.glm <- step(fit.glm)
+# summary(fit.glm)
+# res.aux <- dt.aux %>% mutate(Resid = dt.aux$crime.event - fitted(fit.glm),
+#                              Fitted = fitted(fit.glm))
+# 
+# res.aux$Resid %>% abs() %>% mean()
+# res.aux$Resid^2 %>% mean()
+# 
+# res.aux %>%
+#   ggplot() +
+#   geom_point(aes(x = x, y = y, colour = Resid)) +
+#   scale_colour_gradient(low = 'green', high = 'red')
+# 
+# ############### ************* Covariance Model #############
+# source('/home/adriel_martins/Documents/rcodes/[R]Spatial_Codes/Geostatistics/my_codes/LongLat_UTM.R')
+# 
+# oz <-
+#   res.aux %>%
+#   rename(value = Resid,
+#          lat = x,
+#          long = y) %>%
+#   select(long, lat, value) %>% 
+#   sample_n(100)
+# 
+# # Transforming to SpatialDataFrame
+# oz.gstat <- oz %>% `coordinates<-`(c('long', 'lat'))
+# oz.gstat <- LongLatToUTM(sp_dt = oz.gstat, zone = 23)
+# # Transforming to UTM coord
+# oz.utm <- cbind(oz.gstat@coords, oz.gstat@data) %>%
+#   as_tibble() %>% 
+#   rename(x = lat,
+#          y = long) %>% 
+#   `coordinates<-`(c('y', 'x'))
+# # Our empirical variogram
+# v <- variogram(value ~ 1, oz.utm)
+# plot(v)
 ########################################### PLOTTING ####################################
 # Create an empty raster with the same extent and resolution as the bioclimatic layers
 latitude_raster <- longitude_raster <- raster::raster(nrows = 100,
@@ -107,8 +115,6 @@ latitude_raster <- longitude_raster <- raster::raster(nrows = 100,
 longitude_raster[] <- coordinates(longitude_raster)[,1]
 latitude_raster[] <- coordinates(latitude_raster)[,2]
 
-
-
 plot(longitude_raster)
 # Now create a final prediction stack of the 4 variables we need
 pred_stack <- raster::stack(longitude_raster,
@@ -117,8 +123,8 @@ pred_stack <- raster::stack(longitude_raster,
 names(pred_stack) <- c("x","y")
 
 plot(pred_stack)
-#plot(pred_stack)
-predicted_raster <- raster::predict(pred_stack, fit.glm, type = 'response')
+predicted_raster <- raster::predict(pred_stack, fit.glmm)
+plot(predicted_raster)
 # ############## ************* Kriging #############
 # Modelling the spatial residuals
 # krige_coord <- expand.grid(seq(predicted_raster@extent@ymin, predicted_raster@extent@ymax, l = 100),
@@ -131,12 +137,6 @@ predicted_raster <- raster::predict(pred_stack, fit.glm, type = 'response')
 #                                  distance = 'haversine',
 #                                  df.coord = krige_coord)
 
-plot(predicted_raster)
-# lines(sp.sp)
 predicted_raster_in_map <- raster::mask(predicted_raster, sp.sp)
 plot(predicted_raster_in_map)
 
-predicted_raster_in_map <- read_rds('final_form.rds')
-m.map <- predicted_raster_in_map@data@values %>% matrix(nrow = 500, ncol = 500)
-
-class(m.map)
