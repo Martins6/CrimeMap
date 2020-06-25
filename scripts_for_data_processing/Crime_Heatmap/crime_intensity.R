@@ -174,3 +174,79 @@ z2
 sp.sf %>%  ggplot() +
   geom_sf() 
 
+########################################## BIVAND METHOD ##########################################
+# Following first the example of Bivand
+
+# How many parts to divide the region in each dimension?
+h <- 500
+# Divinding the region into quadrat or 'little squares'
+qcount <- quadratcount(crime.ppp, nx = h, ny = h) %>% 
+  as_tibble()
+
+# adapting the tibble
+## Auxiliary fun
+decomposing <- function(x){
+  x %>%
+    str_replace('\\[', replacement = '') %>%
+    strsplit(',') %>%
+    unlist() %>%
+    first() %>%
+    as.numeric()
+}
+
+dt.aux <- qcount %>% 
+  mutate(y = unlist(lapply(y, decomposing)),
+         x = unlist(lapply(x, decomposing)),
+         crime.event = if_else(n > 0,
+                               1,
+                               0)) %>% 
+  select(-n)
+
+dt.aux$crime.event %>% hist()
+?spkernel2d
+
+data(bodmin)
+plot(bodmin$poly, asp=1, type="n")
+image(kernel2d(as.points(bodmin), bodmin$poly, h0=2, nx=100, ny=100), 
+      add=TRUE, col=terrain.colors(20))
+pointmap(as.points(bodmin), add=TRUE)
+polymap(bodmin$poly, add=TRUE)
+bodmin.xy <- coordinates(bodmin[1:2])
+apply(bodmin$poly, 2, range)
+grd1 <- GridTopology(cellcentre.offset=c(-5.2, -11.5), cellsize=c(0.2, 0.2), cells.dim=c(75,100))
+k100 <- spkernel2d(bodmin.xy, bodmin$poly, h0=1, grd1)
+k150 <- spkernel2d(bodmin.xy, bodmin$poly, h0=1.5, grd1)
+k200 <- spkernel2d(bodmin.xy, bodmin$poly, h0=2, grd1)
+k250 <- spkernel2d(bodmin.xy, bodmin$poly, h0=2.5, grd1)
+df <- data.frame(k100=k100, k150=k150, k200=k200, k250=k250)
+kernels <- SpatialGridDataFrame(grd1, data=df)
+spplot(kernels, checkEmptyRC=FALSE, col.regions=terrain.colors(16), cuts=15)
+
+
+library(rgdal)
+spasthma <- readOGR(".", "spasthma")
+spbdry <- readOGR(".", "spbdry")
+spsrc <- readOGR(".", "spsrc")
+sproads <- readOGR(".", "sproads")
+
+library(maptools)
+sG <- Sobj_SpatialGrid(spbdry, maxDim = 50)$SG
+gt <- slot(sG, "grid")
+
+pbdry <- slot(slot(slot(spbdry, "polygons")[[1]], "Polygons")[[1]], "coords")
+
+library(splancs)
+cases <- spasthma[spasthma$Asthma == "case", ]
+ncases <- nrow(cases)
+controls <- spasthma[spasthma$Asthma == "control", ]
+ncontrols <- nrow(controls)
+kcases <- spkernel2d(cases, pbdry, h0 = bwasthma, gt)
+kcontrols <- spkernel2d(controls, pbdry, h0 = bwasthma, gt)
+
+bwasthmap <- 0.125
+lambda1 <- spkernel2d(cases, pbdry, h0 = bwasthmap, gt)
+lambda0 <- spkernel2d(controls, pbdry, h0 = bwasthmap, gt)
+lambda1 <- lambda1[idxna]
+lambda0 <- lambda0[idxna]
+spkratio$prob <- lambda1/(lambda1 + lambda0)
+is.na(spkratio$prob) <- !is.finite(spkratio$prob)
