@@ -6,7 +6,7 @@ sidebar <- dashboardSidebar(
   sidebarMenu(
     menuItem("Mapa de São Paulo", tabName = "map"),
     menuItem("Análise dos Bairros", tabName = "neighborhoods"),
-    menuItem("Modelagem de Risco de Assalto", tabName = "rob_model"),
+    menuItem("Mapa de Calor do Crime de Assalto", tabName = "rob_model"),
     menuItem("Sobre", tabName = "about")
   )
 )
@@ -88,10 +88,18 @@ body <- dashboardBody(
     tabItem(tabName = "rob_model",
             
             fluidRow(
-              # Descriptive Risk
-              box(title = 'Mapeamento do risco nos bairros', width = 10,
-                  leafletOutput('map.risk')
-                  ),
+              
+              tabBox(
+                width = 10,
+                title = "Mapeamentos",
+                # The id lets us use input$tabset1 on the server to find the current tab
+                id = "tabset_heat_map",
+                # Frequency between number of robberies and population
+                tabPanel("Frequência entre N. de Assaltos e População", leafletOutput('freq_rob_pop_risk')),
+                # Prevalence Risk
+                tabPanel("Risco de prevalência", plotOutput('prevalence_risk'))
+              ),
+
               box(title = 'Opções para visualização', width = 2, solidHeader = T, status = 'primary',
                   selectInput('year.ch.risk', 'Qual ano gostaria de escolher?',
                               choices = c(2015, 2016), multiple = F),

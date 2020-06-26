@@ -21,7 +21,7 @@ library(ggthemes)
 library(rvest)
 
 # Source functions
-source('app_files/functions_app.R')
+source('app/functions_app.R')
 
 ######################################### INPUT ###################################
 # GADM Geospatial data from GADM, mapping SP.

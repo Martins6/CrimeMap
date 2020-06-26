@@ -131,12 +131,13 @@ b1.1 %>% plot()
 z2 %>% dim()
 
 # Raster Plot
+z <- z1
 # Create an empty raster with the same extent and resolution as the Sao Paulo region
-predicted_raster <- raster::raster(nrows = nrow(z1),
-                             ncols = ncol(z1),
+predicted_raster <- raster::raster(nrows = nrow(z),
+                             ncols = ncol(z),
                              ext = raster::extent(sp.sp))
 # For some reason, the raster takes the inverse order of rows
-predicted_raster[] <- z1[nrow(z1):1,]
+predicted_raster[] <- z[nrow(z):1,]
 plot(predicted_raster)
 predicted_raster_in_map <- raster::mask(predicted_raster, sp.sp)
 plot(predicted_raster_in_map)

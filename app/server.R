@@ -67,8 +67,8 @@ server <- function(input, output) {
     return(list(df = res.data, col.df = res.titulo))
   })
   ########################### ROBBERY RISK ####################################
-  ########################### *********** Risk Map ##################################
-  theft_map <- eventReactive(input$go.map.risk, {
+  ########## *********** Frequency between Number of Robberies and Population Map ##############
+  theft_freq_map <- eventReactive(input$go.map.risk, {
     
     # Year choosen
     ych <- input$year.ch.risk
@@ -106,7 +106,6 @@ server <- function(input, output) {
     
     # Joining them in a tibble
     cleaning_bairros <- function(x){
-      
       a <- stringi::stri_trans_general(str = x, 
                                        id = "Latin-ASCII")
       b <- str_to_lower(a)
@@ -129,6 +128,33 @@ server <- function(input, output) {
       mutate(Risco = round(Risco, digit = 3))
     
     return(SP)
+  })
+  ########## *********** Prevalence Map ##############
+  theft_prevalence_map_matrix <- eventReactive(input$go.map.risk, {
+    
+    # Year choosen
+    ych <- 2016 #input$year.ch.risk
+    
+    dt.aux <- readRDS('data/crime_by_square/squares_500.rds')
+    
+    yes.cr <- dt.aux %>% 
+      filter(crime.event == 1) %>% 
+      select(x, y, crime.event) %>% 
+      SpatialPoints() %>% 
+      as('ppp')
+    no.cr <- dt.aux %>% 
+      filter(crime.event == 0) %>% 
+      select(x, y, crime.event) %>% 
+      SpatialPoints() %>% 
+      as('ppp')
+    
+    # Kernel Density smoothing
+    ## Diggle bandwith
+    a1 <- density(yes.cr, sigma = bw.diggle)
+    a2 <- density(no.cr, sigma = bw.diggle)
+    
+    prevalence_matrix <- (a1$v)/(a1$v + a2$v)
+    
   })
   
   ########################### / OUTPUT / ############################
@@ -251,15 +277,37 @@ server <- function(input, output) {
     return(total.crime.by.month.plot)
   })
   ########################### ROBBERY RISK ####################################
-  ########################### *********** Risk Map ##################################
-  output$map.risk <- renderLeaflet({
+  ########################### *********** Frequency between Number of Robberies and Population Map ##############
+  output$freq_rob_pop_risk <- renderLeaflet({
     
-    res <- theft_map() %>%
+    res <- theft_freq_map() %>%
       mapview(zcol = 'Risco',
               col.regions = c('green', 'blue', 'red'),
-              pop = theft_map()$Bairros)
+              pop = theft_freq_map()$Bairros)
     
     return(res@map)
+    
+  })
+  ########## *********** Prevalence Map ##############
+  output$prevalence_risk <- renderPlot({
+    
+    prevalence_matrix <- theft_prevalence_map_matrix()
+    
+    # The geospatial data
+    SP <- readRDS("data/SP.rds")
+    # Also transforming the desired region
+    sp.sp <- SP %>% as_Spatial()
+    sp.sp@proj4string <- CRS('+proj=longlat +datum=WGS84 +no_defs')
+    
+    # Create an empty raster with the same extent and resolution as the Sao Paulo region
+    predicted_raster <- raster::raster(nrows = nrow(prevalence_matrix),
+                                       ncols = ncol(prevalence_matrix),
+                                       ext = raster::extent(sp.sp))
+    # For some reason, the raster takes the inverse order of rows
+    predicted_raster[] <- prevalence_matrix[nrow(prevalence_matrix):1,]
+    predicted_raster_in_map <- raster::mask(predicted_raster, sp.sp)
+    
+    plot(predicted_raster_in_map)
     
   })
   

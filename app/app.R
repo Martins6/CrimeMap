@@ -4,11 +4,11 @@
 
 # EXECUTING THE APP
 ## Global
-source('app_files/global.R')
+source('app/global.R')
 ## UI
-source('app_files/ui.R')
+source('app/ui.R')
 ## Server0
-source('app_files/server.R')
+source('app/server.R')
 
 shiny::shinyApp(ui, server)
 
