@@ -12,6 +12,8 @@ library(lubridate)
 library(sf)
 library(sp)
 library(rgdal)
+library(maptools)
+library(spatstat)
 ## Plotting
 library(plotly)
 library(leaflet)
