@@ -49,11 +49,17 @@ body <- dashboardBody(
     tabItem(tabName = "neighborhoods",
             
             fluidRow(
-              
-              # Plot of the ranking of the best Neighborhoods
-              box(title = 'Ranking dos Bairros', width = 10, solidHeader = T, footer = 'Fonte: SSP',
-                  plotlyOutput('rank_neigh', height = '500px')
-                  ),
+              # Display of the data from the ranking of the best Neighborhoods
+              tabBox(
+                title = 'Ranking dos Bairros',
+                width = 10,
+                # The id lets us use input$tabset1 on the server to find the current tab
+                id = "neighborhood_ranking",
+                # Resumo Retorno Percentual
+                tabPanel("Gráfico de Comparação", plotlyOutput('rank_neigh', height = '500px')),
+                # Histórico da Métrica
+                tabPanel("Tabela de Comparação", DT::dataTableOutput('rank_datatable'))
+              ),
               
               # Options
               box(title = 'Opções', width = 2, solidHeader = T, status = 'primary',

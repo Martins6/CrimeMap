@@ -169,8 +169,8 @@ server <- function(input, output) {
     SP <- SP_data()$df
     zcol.ch <- SP_data()$col.df
     
-    res <- mapview(SP, zcol = zcol.ch,
-            col.regions = c('green', 'blue', 'red'), pop = SP$Bairros)
+    res <- mapview(SP, zcol = c(zcol.ch),
+            col.regions = c('green', 'blue', 'red'), pop = stringr::str_to_title(SP$Bairros))
     
     return(res@map)
   })
@@ -213,7 +213,7 @@ server <- function(input, output) {
     
   })
   ########################### NEIGHBORHOODS ##################################
-  ########################### *********** Neighborhood Rank ##################################
+  ########################### *********** Neighborhood Rank - Plot ##################################
   output$rank_neigh <- renderPlotly({
     
     # Taking total crime and by month of every neighborhood
@@ -236,6 +236,21 @@ server <- function(input, output) {
       labs(y = 'Número de Crimes Cometidos')
     
 
+  })
+  ########################### *********** Neighborhood Rank - Table ##################################
+  output$rank_datatable <- renderDataTable({
+    
+    # Taking total crime and by month of every neighborhood
+    SP_data.neigh()$df %>%
+      as_tibble() %>%
+      select(-geometry) %>%
+      select(all_of(c(SP_data.neigh()$col.df, 'Bairros'))) %>% 
+      `colnames<-`(c('Quant', 'Bairros')) %>% 
+      dplyr::arrange(desc(Quant)) %>% 
+      mutate(Bairros = factor(Bairros, levels = .$Bairros),
+             Rank = 1:n()) %>% 
+      datatable()
+    
   })
   ########################### *********** Time Series of the Crime in the Neighborhood ################
   output$neighborhood_ts_plot <- renderPlotly({
