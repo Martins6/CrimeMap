@@ -103,7 +103,7 @@ body <- dashboardBody(
                 # Frequency between number of robberies and population
                 tabPanel("Frequência entre N. de Assaltos e População", leafletOutput('freq_rob_pop_risk')),
                 # Prevalence Risk
-                tabPanel("Risco de prevalência", plotOutput('prevalence_risk'))
+                tabPanel("Risco de prevalência", leafletOutput('prevalence_risk'))
               ),
 
               box(title = 'Opções para visualização', width = 2, solidHeader = T, status = 'primary',

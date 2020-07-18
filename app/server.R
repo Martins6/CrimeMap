@@ -304,7 +304,7 @@ server <- function(input, output) {
     
   })
   ########## *********** Prevalence Map ##############
-  output$prevalence_risk <- renderPlot({
+  output$prevalence_risk <- renderLeaflet({
     
     prevalence_matrix <- theft_prevalence_map_matrix()
     
@@ -322,7 +322,9 @@ server <- function(input, output) {
     predicted_raster[] <- prevalence_matrix[nrow(prevalence_matrix):1,]
     predicted_raster_in_map <- raster::mask(predicted_raster, sp.sp)
     
-    plot(predicted_raster_in_map)
+    print(predicted_raster_in_map)
+    res <- mapview(predicted_raster_in_map)
+    return(res@map)
     
   })
   
