@@ -4,21 +4,24 @@ header <- dashboardHeader(title = "Crimes em São Paulo")
 ########################## / SIDEBAR / #################################
 sidebar <- dashboardSidebar(
   sidebarMenu(
+    # Tab 1 - Whole City
     menuItem("Mapa de São Paulo", tabName = "map"),
+    # Tab 2 - Neighborhoods
     menuItem("Análise dos Bairros", tabName = "neighborhoods"),
+    # Tab 3 - Modelling Theft Data
     menuItem("Mapa de Calor do Crime de Assalto", tabName = "rob_model"),
+    # Tab 4 - About
     menuItem("Sobre", tabName = "about")
   )
 )
-
 ################################### / BODY / ##########################
 body <- dashboardBody(
   tabItems(
-    #####################  Map Section #####################
+    #####################  Whole City Section #####################
     tabItem(tabName = "map",
             
             fluidRow(
-              # Crime map plot
+              # Whole City - Crime map plot
               box(title = 'Mapeamento dos Crime', width = 10, solidHeader = T, footer = 'Fonte: SSP',
                   leafletOutput('map.plot')
                   ),
@@ -35,14 +38,14 @@ body <- dashboardBody(
             ),
             
             fluidRow(
-              # Time Series Plot
+              # Whole City - Time Series Plot
               box(title = 'Série Temporal Anual do Crime', width = 12, footer = 'Fonte: SSP',
                   plotlyOutput('ts_map')
                   )
               
             )
             
-     # End of the Map Section       
+     # End of the Whole City Section       
     ),
     
     #####################  Neighborhood Section #####################
@@ -69,7 +72,6 @@ body <- dashboardBody(
                               choices = c('Todos os tipos', crime_types),
                               selected = 'Todos os tipos',
                               multiple = F),
-                  #helpText('Não precisa re-submeter a opção de bairro, caso deseje ver outro bairro.'),
                   actionButton('go_neigh', 'Submeter')
               )
             ),
@@ -87,7 +89,7 @@ body <- dashboardBody(
                   )
             )
             
-      # End of the Stats Section       
+      # End of the Neighborhood Section       
     ),
     
     #####################  Robbery Modelling Section #####################

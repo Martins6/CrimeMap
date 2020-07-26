@@ -1,8 +1,8 @@
 server <- function(input, output) {
   
   ########################### / INPUT / ############################
-  ########################### MAP ##################################
-  ########################### *********** Geotagged Data ##################################
+  ########################### Whole City ##################################
+  ########################### *********** Geotagged Data of the City of SP ###################
   SP_data <- eventReactive(input$go_map.plot,{
     # The geospatial data
     SP <- readRDS("data/SP.rds")
@@ -35,7 +35,7 @@ server <- function(input, output) {
   })
   
   ########################### NEIGHBORHOODS ##################################
-  ########################### *********** Geotagged Data ##################################
+  ############ *********** Geotagged Data of the Neighborhood in the City of SP ###################
   SP_data.neigh <- eventReactive(input$go_neigh,{
     # The geospatial data
     SP <- readRDS("data/SP.rds")
@@ -133,7 +133,7 @@ server <- function(input, output) {
   theft_prevalence_map_matrix <- eventReactive(input$go.map.risk, {
     
     # Year choosen
-    ych <- 2016 #input$year.ch.risk
+    ych <- input$year.ch.risk
     
     dt.aux <- readRDS('data/crime_by_square/squares_500.rds')
     
@@ -158,7 +158,7 @@ server <- function(input, output) {
   })
   
   ########################### / OUTPUT / ############################
-  ########################### MAP ##################################
+  ########################### Whole City ##################################
   ########################### *********** Mapview Plot ##################################
   output$map.plot <- renderLeaflet({
     
@@ -295,10 +295,14 @@ server <- function(input, output) {
   ########################### *********** Frequency between Number of Robberies and Population Map ##############
   output$freq_rob_pop_risk <- renderLeaflet({
     
-    res <- theft_freq_map() %>%
-      mapview(zcol = 'Risco',
-              col.regions = c('green', 'blue', 'red'),
-              pop = theft_freq_map()$Bairros)
+    `Frequência` <- theft_freq_map()
+    
+    res <- mapview(
+      `Frequência`,
+      zcol = 'Risco',
+      col.regions = c('green', 'blue', 'red'),
+      pop = `Frequência`$Bairros
+    )
     
     return(res@map)
     
@@ -323,6 +327,11 @@ server <- function(input, output) {
     predicted_raster_in_map <- raster::mask(predicted_raster, sp.sp)
     
     print(predicted_raster_in_map)
+    
+    a <- raster::extract(predicted_raster_in_map, abc)
+    
+    print(a)
+    
     res <- mapview(predicted_raster_in_map)
     return(res@map)
     
