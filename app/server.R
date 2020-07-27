@@ -135,7 +135,7 @@ server <- function(input, output) {
     # Year choosen
     ych <- input$year.ch.risk
     
-    dt.aux <- readRDS('data/crime_by_square/squares_500.rds')
+    dt.aux <- readRDS(paste('data/crime_by_square/year', ych, 'squares_500.rds', sep = ''))
     
     yes.cr <- dt.aux %>% 
       filter(crime.event == 1) %>% 
