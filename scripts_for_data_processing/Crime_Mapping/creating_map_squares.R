@@ -14,12 +14,14 @@ library(spatstat)
 library(maptools)
 library(splancs)
 ###################### ****************** Reading Data ######################
+setwd('~/Documents/CrimeMap/')
 # GADM Geospatial data from GADM, mapping the whole of Brazil
 brazil.sf <- readRDS('data_pre_processed/gadm36_BRA_3_sf.rds')
 
-for(year in c(2016, 2015)) {
+for (year in c(2016, 2015)) {
   # Reading Data from the SSP, which was on Kaagle.
-  crime <- read_csv(paste("data_pre_processed/SSP/BO_",year,".csv", sep = ''))
+  crime <-
+    read_csv(paste("data_pre_processed/SSP/BO_", year, ".csv", sep = ''))
   ###################### ****************** Data Wrangling ######################
   # Filtering our Map of Brazil into the Map of the City of Sao Paulo.
   sp.sf <- brazil.sf %>%
@@ -84,10 +86,10 @@ for(year in c(2016, 2015)) {
   # Call that variable Z.
   # 4) Fit the logistic model with GLMMM or GLGM to variable Y (assaulted, not assaulted).
   
-  # The point object
-  crime.ppp %>% summary()
-  # The region object
-  sp.sp %>% summary()
+  # # The point object
+  # crime.ppp %>% summary()
+  # # The region object
+  # sp.sp %>% summary()
   
   for (i in 1:5) {
     # How many parts to divide the region in each dimension?
@@ -117,11 +119,18 @@ for(year in c(2016, 2015)) {
         crime.event = if_else(n > 0,
                               1,
                               0)
-      ) %>%
-      select(-n)
+      )
     
-    dt.aux %>% write_rds(str_c(c(
-      'data/crime_by_square/', 'year', year, 'squares_', h, '.rds'
-    ), collapse = ''))
+    dt.aux %>% write_rds(str_c(
+      c(
+        'data/crime_by_square/',
+        'year',
+        year,
+        'squares_',
+        h,
+        '.rds'
+      ),
+      collapse = ''
+    ))
   }
 }

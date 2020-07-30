@@ -39,9 +39,21 @@ body <- dashboardBody(
             
             fluidRow(
               # Whole City - Time Series Plot
-              box(title = 'Série Temporal Anual do Crime', width = 12, footer = 'Fonte: SSP',
+              box(title = 'Série Temporal Anual do Crime', width = 6, footer = 'Fonte: SSP',
                   plotlyOutput('ts_map')
-                  )
+                  ),
+              
+              # Display of the data from the ranking of the best and worst neighborhoods
+              tabBox(
+                title = 'Ranking dos Bairros',
+                width = 6,
+                # The id lets us use input$tabset1 on the server to find the current tab
+                id = "neighborhood_ranking_whole_city",
+                # Resumo Retorno Percentual
+                tabPanel("Top 5", plotOutput('rank_neigh_best')),
+                # Histórico da Métrica
+                tabPanel("Últimos 5", plotOutput('rank_neigh_worse'))
+              )
               
             )
             
@@ -95,22 +107,27 @@ body <- dashboardBody(
     #####################  Robbery Modelling Section #####################
     tabItem(tabName = "rob_model",
             
+            # Descriptive Maps
             fluidRow(
               
               tabBox(
                 width = 10,
                 title = "Mapeamentos",
                 # The id lets us use input$tabset1 on the server to find the current tab
-                id = "tabset_heat_map",
-                # Frequency between number of robberies and population
+                id = "tabset_descriptive_map",
+                # Map of Frequency between number of robberies and population
                 tabPanel("Frequência entre N. de Assaltos e População", leafletOutput('freq_rob_pop_risk')),
-                # Prevalence Risk
-                tabPanel("Risco de prevalência", leafletOutput('prevalence_risk'))
+                # Prevalence Map
+                tabPanel("Mapa de prevalência de assalto", leafletOutput('prevalence_map')),
+                # Theft Risk
+                tabPanel("Mapa de Risco de Assalto", leafletOutput('theft_risk_map'))
               ),
 
               box(title = 'Opções para visualização', width = 2, solidHeader = T, status = 'primary',
                   selectInput('year.ch.risk', 'Qual ano gostaria de escolher?',
                               choices = c(2015, 2016), multiple = F),
+                  selectInput('model_chooser_risk_theft', 'No Mapa de Risco de Assalto, qual modelo escolher?',
+                              choices = c('Kernel Espacial', 'Modelo Geoestatístico'), multiple = F),
                   actionButton('go.map.risk', 'Submeter')
                   )
               
