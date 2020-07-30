@@ -267,10 +267,11 @@ server <- function(input, output) {
       as_tibble() %>% 
       select(all_of(c(aux.col.name, 'Bairros'))) %>%
       dplyr::arrange(desc(.data[[aux.col.name]])) %>% 
+      head(5) %>% 
+      dplyr::arrange(.data[[aux.col.name]]) %>% 
       mutate(Bairros = factor(Bairros, levels = .$Bairros))
     
     aux %>%
-      head() %>% 
       ggplot() +
       geom_bar(
         aes(x = Bairros, y = .data[[aux.col.name]]),
@@ -299,7 +300,7 @@ server <- function(input, output) {
       mutate(Bairros = factor(Bairros, levels = .$Bairros))
     
     aux %>%
-      head() %>% 
+      head(5) %>% 
       ggplot() +
       geom_bar(
         aes(x = Bairros, y = .data[[aux.col.name]]),
