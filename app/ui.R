@@ -9,7 +9,7 @@ sidebar <- dashboardSidebar(
     # Tab 2 - Neighborhoods
     menuItem("Análise dos Bairros", tabName = "neighborhoods"),
     # Tab 3 - Modelling Theft Data
-    menuItem("Mapa de Calor do Crime de Assalto", tabName = "rob_model"),
+    menuItem("Mapeamento de Assalto", tabName = "rob_model"),
     # Tab 4 - About
     menuItem("Sobre", tabName = "about")
   )
@@ -111,16 +111,17 @@ body <- dashboardBody(
             fluidRow(
               
               tabBox(
-                width = 6,
-                title = "Mapeamentos",
+                width = 10,
                 # The id lets us use input$tabset1 on the server to find the current tab
-                id = "tabset_descriptive_map",
+                id = "tabset_map",
                 # Map of Frequency between number of robberies and population
                 tabPanel("Proporção de Assalto nos Bairros", leafletOutput('freq_rob_pop_risk')),
                 # Prevalence Map
-                tabPanel("Mapa de prevalência de assalto", leafletOutput('prevalence_map')),
+                tabPanel("Prevalência de assalto", leafletOutput('prevalence_map')),
+                # Theft Quant
+                tabPanel("Quantidade de Assalto", leafletOutput('theft_quant_map')),
                 # Theft Risk
-                tabPanel("Mapa de Risco de Assalto", leafletOutput('theft_risk_map'))
+                tabPanel("Risco de Assalto", leafletOutput('theft_risk_map'))
               ),
 
               box(title = 'Opções para visualização', width = 2, solidHeader = T, status = 'primary',
