@@ -111,12 +111,12 @@ body <- dashboardBody(
             fluidRow(
               
               tabBox(
-                width = 10,
+                width = 6,
                 title = "Mapeamentos",
                 # The id lets us use input$tabset1 on the server to find the current tab
                 id = "tabset_descriptive_map",
                 # Map of Frequency between number of robberies and population
-                tabPanel("Frequência entre N. de Assaltos e População", leafletOutput('freq_rob_pop_risk')),
+                tabPanel("Proporção de Assalto nos Bairros", leafletOutput('freq_rob_pop_risk')),
                 # Prevalence Map
                 tabPanel("Mapa de prevalência de assalto", leafletOutput('prevalence_map')),
                 # Theft Risk

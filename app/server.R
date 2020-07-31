@@ -361,6 +361,7 @@ server <- function(input, output) {
       mutate(Bairros = factor(Bairros, levels = .$Bairros),
              Rank = 1:n()) %>%
       rename(Quantidade = Quant) %>%
+      select(Bairros, Quantidade, Rank) %>% 
       datatable(class = 'cell-border stripe', rownames = FALSE)
     
   })
@@ -439,10 +440,7 @@ server <- function(input, output) {
       prevalence_matrix[nrow(prevalence_matrix):1,]
     predicted_raster_in_map <- raster::mask(predicted_raster, sp.sp)
     
-    print(predicted_raster_in_map)
-    
     a <- raster::extract(predicted_raster_in_map, abc)
-    
     print(a)
     
     res <- mapview(predicted_raster_in_map)
