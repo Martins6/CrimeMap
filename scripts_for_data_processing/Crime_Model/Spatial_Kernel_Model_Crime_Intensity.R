@@ -119,7 +119,6 @@ sp.sf <- sp.sf %>%
 SP
 sp.sf %>% mapview::mapview(zcol = 'Risco', pop = NULL)
 ##################################### INTESITY MODEL ################################
-
 # Putting into the format of the 'ppp'
 sp.sp <- as(sp.sf, "Spatial")
 sp.sp@proj4string <- CRS(as.character(NA))
@@ -155,9 +154,4 @@ crime.ppp <- rescale(crime.ppp, 1000, 'kilometers')
 # Kernel estimates
 den.dig <- density(crime.ppp, sigma = bw.diggle, edge = T)
 plot(den.dig, main = '')
-crime.ppp %>% plot()
-
-crime.ppp %>% plot()
-sp.sf$Bairros
-
-
+den.dig %>% as.matrix()
