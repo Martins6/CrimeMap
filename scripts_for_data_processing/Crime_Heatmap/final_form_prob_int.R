@@ -118,7 +118,7 @@ sp.sf <- sp.sf %>%
   mutate(Risco = round(Risco, digit = 3))
 SP
 sp.sf %>% mapview::mapview(zcol = 'Risco', pop = NULL)
-##################################### RISK MODEL ################################
+##################################### INTESITY MODEL ################################
 
 # Putting into the format of the 'ppp'
 sp.sp <- as(sp.sf, "Spatial")

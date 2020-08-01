@@ -342,7 +342,6 @@ server <- function(input, output) {
         fill = "tomato3"
       ) +
       labs(title = "") +
-      geom_point(aes(x = Bairros, y = Rank)) +
       theme_bw() +
       theme(axis.text.x = element_text(angle = 65, vjust = 0.6)) +
       labs(y = 'Número de Crimes Cometidos')
@@ -443,7 +442,8 @@ server <- function(input, output) {
     a <- raster::extract(predicted_raster_in_map, abc)
     print(a)
     
-    res <- mapview(predicted_raster_in_map)
+    Mapa <- predicted_raster_in_map
+    res <- mapview(Mapa)
     return(res@map)
     
   })
