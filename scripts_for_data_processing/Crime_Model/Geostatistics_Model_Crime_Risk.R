@@ -32,7 +32,7 @@ sp.sp@proj4string <- CRS('+proj=longlat +datum=WGS84 +no_defs')
 # sp.sp <- spTransform(sp.sp, CRS(paste("+proj=utm +zone=",zone,"+datum=WGS84", sep = '')))
 
 # Reading our square map
-dt.aux <- read_rds('data/crime_by_square/squares_100.rds') 
+dt.aux <- read_rds('data/crime_by_square/year2015squares_100.rds') 
 dt.aux$crime.event %>% hist()
 dt.aux %>% 
   ggplot() +
@@ -40,71 +40,82 @@ dt.aux %>%
 
 ########################################### GLGM OR GLMM ####################################
 # # # Fitting GLGM or GLMMM in a Spatial Statistics context
-dt.fit <- dt.aux %>% sample_n(100)
-t0 <- Sys.time()
-fit.glmm <- spaMM::fitme(crime.event ~ 1 + Matern(1|x + y),
-                         data = dt.fit,
-                         family = binomial(link = "logit"),
-                         method = 'PQL/L')
-t1 <- Sys.time()
-print(t1 - t0)
-fitted_vec <- as.vector(predict(fit.glmm, newdata = hello))
-
-summary(fit.glmm)
-resid(fit.glmm)^2 %>% sum()
-
-res.aux %>%
-  ggplot() +
-  geom_point(aes(x = x, y = y, colour = Resid)) +
-  scale_colour_gradient(low = 'green', high = 'red')
-
-dt.aux %>%
-  mutate(fitted_val = fitted_vec) %>% 
-  ggplot() +
-  geom_tile(aes(x,y, fill = fitted_val))
-# ########################################### GLM + Geostatistic - Boosting ###############################
 # dt.fit <- dt.aux %>% sample_n(100)
-# ############### ************* GLM #############
-# # Fitting GLM + Geostatistic
-# fit.glm <- glm(crime.event ~ 1,
-#                          data = dt.aux,
-#                          family = binomial(link = "logit"))
-# fit.glm <- step(fit.glm)
-# summary(fit.glm)
-# res.aux <- dt.aux %>% mutate(Resid = dt.aux$crime.event - fitted(fit.glm),
-#                              Fitted = fitted(fit.glm))
+# t0 <- Sys.time()
+# fit.glmm <- spaMM::fitme(crime.event ~ Matern(1|x + y),
+#                          data = dt.fit,
+#                          family = binomial(link = "logit"),
+#                          method = 'PQL/L')
+# t1 <- Sys.time()
+# print(t1 - t0)
+# fitted_vec <- as.vector(predict(fit.glmm, newdata = hello))
 # 
-# res.aux$Resid %>% abs() %>% mean()
-# res.aux$Resid^2 %>% mean()
+# ?spaMM::fitme
+# 
+# summary(fit.glmm)
+# resid(fit.glmm)^2 %>% sum()
 # 
 # res.aux %>%
 #   ggplot() +
 #   geom_point(aes(x = x, y = y, colour = Resid)) +
 #   scale_colour_gradient(low = 'green', high = 'red')
 # 
-# ############### ************* Covariance Model #############
-# source('/home/adriel_martins/Documents/rcodes/[R]Spatial_Codes/Geostatistics/my_codes/LongLat_UTM.R')
-# 
-# oz <-
-#   res.aux %>%
-#   rename(value = Resid,
-#          lat = x,
-#          long = y) %>%
-#   select(long, lat, value) %>% 
-#   sample_n(100)
-# 
-# # Transforming to SpatialDataFrame
-# oz.gstat <- oz %>% `coordinates<-`(c('long', 'lat'))
-# oz.gstat <- LongLatToUTM(sp_dt = oz.gstat, zone = 23)
-# # Transforming to UTM coord
-# oz.utm <- cbind(oz.gstat@coords, oz.gstat@data) %>%
-#   as_tibble() %>% 
-#   rename(x = lat,
-#          y = long) %>% 
-#   `coordinates<-`(c('y', 'x'))
-# # Our empirical variogram
-# v <- variogram(value ~ 1, oz.utm)
-# plot(v)
+# dt.aux %>%
+#   mutate(fitted_val = fitted_vec) %>% 
+#   ggplot() +
+#   geom_tile(aes(x,y, fill = fitted_val))
+# ########################################### GLM + Geostatistic - Boosting ###############################
+dt.fit <- dt.aux #%>% sample_n(100)
+############### ************* GLM #############
+# Fitting GLM + Geostatistic
+fit.glm <- glm(crime.event ~ 1,
+                         data = dt.aux,
+                         family = binomial(link = "logit"))
+fit.glm <- step(fit.glm)
+summary(fit.glm)
+res.aux <- dt.aux %>% mutate(Resid = dt.aux$crime.event - fitted(fit.glm),
+                             Fitted = fitted(fit.glm))
+
+res.aux$Resid %>% abs() %>% mean()
+res.aux$Resid^2 %>% mean()
+
+res.aux %>%
+  ggplot() +
+  geom_point(aes(x = x, y = y, colour = Resid)) +
+  scale_colour_gradient(low = 'green', high = 'red')
+
+############### ************* Covariance Model #############
+source('/home/adriel_martins/Documents/rcodes/[R]Spatial_Codes/Geostatistics/my_codes/LongLat_UTM.R')
+source('/home/adriel_martins/Documents/rcodes/[R]Spatial_Codes/Geostatistics/my_codes/Kriging.R')
+source('/home/adriel_martins/Documents/rcodes/[R]Spatial_Codes/Geostatistics/my_codes/Variogram_Geodesic_Fitting_Function.R')
+source('/home/adriel_martins/Documents/rcodes/[R]Spatial_Codes/Geostatistics/my_codes/Cross_Validation_Geodesic.R')
+source('/home/adriel_martins/Documents/rcodes/[R]Spatial_Codes/Geostatistics/my_codes/autofitGeodesic.R')
+
+oz <-
+  res.aux %>%
+  rename(value = Resid,
+         lat = x,
+         long = y) %>%
+  select(long, lat, value) 
+
+# Transforming to SpatialDataFrame
+oz.gstat <- oz %>% `coordinates<-`(c('long', 'lat'))
+oz.gstat <- LongLatToUTM(sp_dt = oz.gstat, zone = 23)
+# Transforming to UTM coord
+oz.utm <- cbind(oz.gstat@coords, oz.gstat@data) %>%
+  as_tibble() %>%
+  rename(x = lat,
+         y = long) %>%
+  `coordinates<-`(c('y', 'x'))
+# Our empirical variogram
+v <- autofit.Variogram.Geodesic(oz)
+v$plot
+var.fit <- v$variogram
+
+# Just kriging with the observed values to the observed values
+inside.krige <- ordinary_kriging(oz, var.fit,
+                                 distance = 'haversine',
+                                 df.coord = oz[c('lat', 'long')])
 ########################################### PLOTTING ####################################
 # Create an empty raster with the same extent and resolution as the bioclimatic layers
 latitude_raster <- longitude_raster <- raster::raster(nrows = 100,
