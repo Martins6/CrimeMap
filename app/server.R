@@ -227,69 +227,6 @@ server <- function(input, output) {
     
     res_matrix <- den.dig$v
   })
-  ########## *********** GLGM Map ##############
-  spatial_kernel_map_matrix <- eventReactive(input$go.map.risk, {
-    
-    # The geospatial data
-    sp.sf <- readRDS("data/SP.rds")
-    
-    # UTM coordinates
-    sp.sp <- sp.sf %>% as_Spatial()
-    sp.sp@proj4string <- CRS('+proj=longlat +datum=WGS84 +no_defs')
-    zone <- 23
-    sp.sp <- spTransform(sp.sp, CRS(paste("+proj=utm +zone=",zone,"+datum=WGS84", sep = '')))
-    sp.sf <- sp.sp %>% st_as_sf()
-    
-    # Putting into the format of the 'ppp'
-    sp.sp <- as(sp.sf, "Spatial")
-    sp.sp@proj4string <- CRS(as.character(NA))
-    # Window of the points
-    window <- maptools::as.owin.SpatialPolygons(sp.sp)
-    
-    # Year choosen
-    ych <- input$year.ch.risk
-    
-    # Reading our crime dataset
-    path.file <- paste('data/', ych, '_roubo_data.rds', 
-                       sep = '')
-    
-    crime <- readRDS(path.file)
-    
-    # Let us put our crime dataset into a proper spatial format for point patterns
-    crime.sp <- crime %>% select(longitude, latitude) %>% SpatialPoints()
-    crime.sp@proj4string <- CRS('+proj=longlat +datum=WGS84 +no_defs')
-    # Transforming to UTM coordinates
-    zone <- 23
-    crime.sp <- spTransform(crime.sp, CRS(paste("+proj=utm +zone=",zone,"+datum=WGS84", sep = '')))
-    crime.sf <- crime.sp %>% st_as_sf()
-    
-    # Pure crime coordinates
-    crime.coord <- matrix(unlist(crime.sf$geometry), ncol = 2, byrow = T)
-    # Checking points outside the desired region
-    inside.sp <- inside.owin(crime.coord[,1],
-                             crime.coord[,2],
-                             w = window)
-    # Selecting only those that fall within
-    crime.coord <- crime.coord[inside.sp,]
-    
-    # Creating the ppp data
-    crime.ppp <- ppp(x = crime.coord[,1], y = crime.coord[,2],
-                     window = window, check = T)
-    
-    # If there are duplicated versions let us jitter so not to lose any info
-    if(any(duplicated(crime.ppp))){crime.ppp <- rjitter(crime.ppp, retry=TRUE, nsim=1, drop=TRUE)}
-    
-    # Proper rescalling of the values
-    crime.ppp <- rescale(crime.ppp, 1000, 'kilometers')
-    
-    # Density using
-    den.dig <- density(crime.ppp, sigma = bw.diggle, edge = T)
-    
-    res_matrix <- den.dig$v
-  })
-  
-  
-  
   
   ########################### / OUTPUT / ############################
   ########################### Whole City ##################################

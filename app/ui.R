@@ -117,18 +117,14 @@ body <- dashboardBody(
                 # Map of Frequency between number of robberies and population
                 tabPanel("Proporção de Assalto nos Bairros", leafletOutput('freq_rob_pop_risk')),
                 # Prevalence Map
-                tabPanel("Prevalência de assalto", leafletOutput('prevalence_map')),
+                tabPanel("Prevalência de Assalto", leafletOutput('prevalence_map')),
                 # Theft Quant
-                tabPanel("Quantidade de Assalto", leafletOutput('theft_quant_map')),
-                # Theft Risk
-                tabPanel("Risco de Assalto", leafletOutput('theft_risk_map'))
+                tabPanel("Quantidade de Assalto", leafletOutput('theft_quant_map'))
               ),
 
               box(title = 'Opções para visualização', width = 2, solidHeader = T, status = 'primary',
                   selectInput('year.ch.risk', 'Qual ano gostaria de escolher?',
                               choices = c(2015, 2016), multiple = F),
-                  selectInput('model_chooser_risk_theft', 'No Mapa de Risco de Assalto, qual modelo escolher?',
-                              choices = c('Kernel Espacial', 'Modelo Geoestatístico'), multiple = F),
                   actionButton('go.map.risk', 'Submeter')
                   )
               
