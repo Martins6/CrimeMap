@@ -16,7 +16,7 @@ Pull requests are specifically very much welcome! For major changes, please open
 
 ## Acknowledgments
 
-This app is from the R community to the world. All the packages that made the app were free and open-source, that is amazing and I'm very thankful. Also, I would like to highlight the [book] "Crime Mapping in R" made by Medina and Solymosi. That book was a real help.
+This app is from the R community to the world. All the packages that made the app were free and open-source, that is amazing and I'm very thankful. Also, I would like to highlight the [book](https://maczokni.github.io/crimemapping_textbook_bookdown/) "Crime Mapping in R" made by Medina and Solymosi. That book was a real help.
 
 ## License
 [GPL - 3.0](https://choosealicense.com/licenses/gpl-3.0/)
