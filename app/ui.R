@@ -128,6 +128,22 @@ body <- dashboardBody(
                   actionButton('go.map.risk', 'Submeter')
                   )
               
+            ),
+            
+            fluidRow(
+              # Exact value by adress
+              box(title = 'Valor Exato no Mapa por Endereços', width = 8,
+                  DTOutput('table_of_maps')
+                  ),
+              
+              # Parameters
+              box(width = 4, solidHeader = T, status = 'primary', height = 300,
+                  helpText('Nenhuma informação será guardada. Consulte a aba Sobre para mais informações.'),
+                  textAreaInput('adress', label = 'Insira abaixo o endereço.',
+                                height = '100px',
+                                value = 'Viaduto do Chá, 15 - Centro Histórico de São Paulo, São Paulo'),
+                  actionButton('go_table_adress_risk', 'Submeter')
+              )
             )
             
       # End of the Stats Section       

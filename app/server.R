@@ -141,7 +141,7 @@ server <- function(input, output) {
     return(SP)
   })
   ########## *********** Prevalence Map ##############
-  theft_prevalence_map_matrix <- eventReactive(input$go.map.risk, {
+  theft_prevalence_map <- eventReactive(input$go.map.risk, {
     # Year choosen
     ych <- input$year.ch.risk
     
@@ -166,9 +166,26 @@ server <- function(input, output) {
     
     prevalence_matrix <- (a1$v) / (a1$v + a2$v)
     
+    # The geospatial data
+    SP <- readRDS("data/SP.rds")
+    # Also transforming the desired region
+    sp.sp <- SP %>% as_Spatial()
+    sp.sp@proj4string <- CRS('+proj=longlat +datum=WGS84 +no_defs')
+    
+    # Create an empty raster with the same extent and resolution as the Sao Paulo region
+    predicted_raster <-
+      raster::raster(
+        nrows = nrow(prevalence_matrix),
+        ncols = ncol(prevalence_matrix),
+        ext = raster::extent(sp.sp)
+      )
+    # For some reason, the raster takes the inverse order of rows
+    predicted_raster[] <-
+      prevalence_matrix[nrow(prevalence_matrix):1,]
+    predicted_raster_in_map <- raster::mask(predicted_raster, sp.sp)
   })
   ########## *********** Spatial Kernel Map ##############
-  spatial_kernel_map_matrix <- eventReactive(input$go.map.risk, {
+  spatial_kernel_map <- eventReactive(input$go.map.risk, {
     
     # The geospatial data
     sp.sf <- readRDS("data/SP.rds")
@@ -225,7 +242,55 @@ server <- function(input, output) {
     # Density using
     den.dig <- density(crime.ppp, sigma = bw.diggle, edge = T)
     
-    res_matrix <- den.dig$v
+    spkm_matrix <- den.dig$v
+    
+    # The geospatial data
+    SP <- readRDS("data/SP.rds")
+    # Also transforming the desired region
+    sp.sp <- SP %>% as_Spatial()
+    sp.sp@proj4string <- CRS('+proj=longlat +datum=WGS84 +no_defs')
+    
+    # Create an empty raster with the same extent and resolution as the Sao Paulo region
+    predicted_raster <-
+      raster::raster(
+        nrows = nrow(spkm_matrix),
+        ncols = ncol(spkm_matrix),
+        ext = raster::extent(sp.sp)
+      )
+    # For some reason, the raster takes the inverse order of rows
+    predicted_raster[] <-
+      spkm_matrix[nrow(spkm_matrix):1,]
+    predicted_raster_in_map <- raster::mask(predicted_raster, sp.sp)
+  })
+  ########## *********** Extracting Values from Exact Locations the Maps ##############
+  table_map_extraction <- eventReactive(input$go_table_adress_risk, {
+    
+    # Extracting the coordinates from the Adress given
+    doc <-  mp_geocode(
+      addresses = input$adress,
+      key = key,
+      quiet = TRUE
+    )
+    
+    sf_point <- mp_get_points(doc)
+    
+    point_adress <-  
+      sf_point %>% 
+      st_coordinates() %>%
+      as_vector() %>% 
+      matrix(1,2)
+    
+    print(point_adress)
+    
+    # Prevalence Map
+    v1 <- raster::extract(theft_prevalence_map(), point_adress) %>% round(3) %>% scales::percent()
+    # Quantity of Thefts 
+    v2 <- raster::extract(spatial_kernel_map(), point_adress) %>% round(3) %>% scales::percent()
+    
+    tibble(`Prevalência` = v1,
+           `Quantidade de Assalto` = v1) %>% 
+      datatable()
+    
   })
   
   ########################### / OUTPUT / ############################
@@ -351,8 +416,6 @@ server <- function(input, output) {
     
   })
   
-  
-  
   ########################### Neighborhoods ##################################
   ########################### *********** Neighborhood Rank - Plot ##################################
   output$rank_neigh <- renderPlotly({
@@ -451,62 +514,28 @@ server <- function(input, output) {
   })
   ########## *********** Prevalence Map ##############
   output$prevalence_map <- renderLeaflet({
-    prevalence_matrix <- theft_prevalence_map_matrix()
-    
-    # The geospatial data
-    SP <- readRDS("data/SP.rds")
-    # Also transforming the desired region
-    sp.sp <- SP %>% as_Spatial()
-    sp.sp@proj4string <- CRS('+proj=longlat +datum=WGS84 +no_defs')
-    
-    # Create an empty raster with the same extent and resolution as the Sao Paulo region
-    predicted_raster <-
-      raster::raster(
-        nrows = nrow(prevalence_matrix),
-        ncols = ncol(prevalence_matrix),
-        ext = raster::extent(sp.sp)
-      )
-    # For some reason, the raster takes the inverse order of rows
-    predicted_raster[] <-
-      prevalence_matrix[nrow(prevalence_matrix):1,]
-    predicted_raster_in_map <- raster::mask(predicted_raster, sp.sp)
-    
-    a <- raster::extract(predicted_raster_in_map, abc)
-    print(a)
+    predicted_raster_in_map <- theft_prevalence_map()
     
     Mapa <- predicted_raster_in_map
     res <- mapview(Mapa)
     return(res@map)
     
   })
-  ########## *********** Quantity of Theft Crimes ##############
+  ########## *********** Theft Quantity Map ##############
   output$theft_quant_map <- renderLeaflet({
-    spkm_matrix <- spatial_kernel_map_matrix()
-    
-    # The geospatial data
-    SP <- readRDS("data/SP.rds")
-    # Also transforming the desired region
-    sp.sp <- SP %>% as_Spatial()
-    sp.sp@proj4string <- CRS('+proj=longlat +datum=WGS84 +no_defs')
-    
-    # Create an empty raster with the same extent and resolution as the Sao Paulo region
-    predicted_raster <-
-      raster::raster(
-        nrows = nrow(spkm_matrix),
-        ncols = ncol(spkm_matrix),
-        ext = raster::extent(sp.sp)
-      )
-    # For some reason, the raster takes the inverse order of rows
-    predicted_raster[] <-
-      spkm_matrix[nrow(spkm_matrix):1,]
-    predicted_raster_in_map <- raster::mask(predicted_raster, sp.sp)
+    predicted_raster_in_map <- spatial_kernel_map()
     
     Mapa <- predicted_raster_in_map
     res <- mapview(Mapa)
     return(res@map)
     
   })
-  
+  ########## *********** Datatable Exact Value ##############
+  output$table_of_maps <- renderDataTable({
+    df <- table_map_extraction()
+    
+    df
+  })
   
   
   
