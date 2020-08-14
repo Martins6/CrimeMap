@@ -4,7 +4,7 @@ An app to visualise, map and predict crime statistics. It serves as a Proof of C
 
 ## Usage or installation
 
-I'm working on estabilishin a link in a server for public use.
+I'm working on estabilishing a link in a server for public use.
 
 But, if you wish to run in your own computer, first clone this repository. Then, you must have R software installed and set the working directory as the folder that you downloaded. Finally, just run the file "app.R". It will automatically install the dependencies.
 
