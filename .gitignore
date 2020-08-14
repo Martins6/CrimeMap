@@ -4,5 +4,8 @@
 data_pre_processed/*
 data/*
 .Rproj.user
+.Rhistory
 renv/
 renv
+CrimeMap.Rproj
+
