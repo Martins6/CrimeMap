@@ -9,7 +9,6 @@ if (!requireNamespace("renv")){
 }else{
   renv::restore()
 }
-
 # EXECUTING THE APP
 ## Global
 source('app/global.R')
