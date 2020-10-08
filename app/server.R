@@ -3,7 +3,6 @@ server <- function(input, output) {
   ########################### Whole City ##################################
   ########################### *********** Geotagged Data of the City of SP ###################
   SP_data <- eventReactive(input$go_map.plot, {
-    print('hello')
     # The geospatial data
     SP <- readRDS("data/SP.rds")
     # The year choosen
@@ -27,7 +26,6 @@ server <- function(input, output) {
       
     }
     # Retrieving dataframe choosen
-    print('goodmorning')
     SPtibble <- readRDS(path.file)
     # Merging with the geotag
     res.data <- merge(SP, SPtibble)
@@ -115,6 +113,7 @@ server <- function(input, output) {
     municip_name_data <- html_text(municip_html)
     pop_html <-
       html_nodes(x = webpage, 'table.wikitable tbody tr td:nth-child(3)')
+    # Deleting the last value because is just a "\n"
     pop_data <- html_text(pop_html)
     
     # Joining them in a tibble
@@ -126,8 +125,10 @@ server <- function(input, output) {
       return(d)
     }
     
-    munic_pop <- tibble(Bairros = municip_name_data,
-                        Pop = pop_data) %>%
+    munic_pop <- 
+      tibble(Bairros = municip_name_data,
+             # Deleting last value because is just a "\n" string
+             Pop = pop_data[-length(pop_data)]) %>%
       mutate(Bairros = cleaning_bairros(Bairros),
              Pop = 1000 * as.double(str_replace(Pop, '\n', '')))
     
@@ -282,15 +283,13 @@ server <- function(input, output) {
       as_vector() %>% 
       matrix(1,2)
     
-    print(point_adress)
-    
     # Prevalence Map
     v1 <- raster::extract(theft_prevalence_map(), point_adress) %>% round(3) %>% scales::percent()
     # Quantity of Thefts 
     v2 <- raster::extract(spatial_kernel_map(), point_adress) %>% round(3) %>% scales::percent()
     
     tibble(`Prevalência` = v1,
-           `Quantidade de Assalto` = v1) %>% 
+           `Quantidade de Assalto` = v2) %>% 
       datatable()
     
   })
@@ -316,8 +315,6 @@ server <- function(input, output) {
       col.regions = c('green', 'blue', 'red'),
       pop = stringr::str_to_title(SP$Bairros)
     )
-    
-    print(res)
     
     return(res@map)
   })
