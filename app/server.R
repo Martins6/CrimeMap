@@ -3,6 +3,7 @@ server <- function(input, output) {
   ########################### Whole City ##################################
   ########################### *********** Geotagged Data of the City of SP ###################
   SP_data <- eventReactive(input$go_map.plot, {
+    print('hello')
     # The geospatial data
     SP <- readRDS("data/SP.rds")
     # The year choosen
@@ -26,6 +27,7 @@ server <- function(input, output) {
       
     }
     # Retrieving dataframe choosen
+    print('goodmorning')
     SPtibble <- readRDS(path.file)
     # Merging with the geotag
     res.data <- merge(SP, SPtibble)
@@ -314,6 +316,8 @@ server <- function(input, output) {
       col.regions = c('green', 'blue', 'red'),
       pop = stringr::str_to_title(SP$Bairros)
     )
+    
+    print(res)
     
     return(res@map)
   })
