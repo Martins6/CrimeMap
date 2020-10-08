@@ -32,7 +32,7 @@ library(rvest)
 library(mapsapi)
 
 # Source functions
-source('app/functions_app.R')
+source('functions_app.R')
 
 ######################################### INPUT ###################################
 # GADM Geospatial data from GADM, mapping SP.

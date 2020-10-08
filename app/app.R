@@ -4,11 +4,11 @@
 
 # EXECUTING THE APP
 ## Global
-source('app/global.R')
+source('global.R')
 ## UI
-source('app/ui.R')
+source('ui.R')
 ## Server
-source('app/server.R')
+source('server.R')
 
 # Configurations of the server
 options(shiny.port = 3137, shiny.server = '0.0.0.0')
