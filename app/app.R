@@ -2,7 +2,7 @@
 # Author: Adriel Martins
 # Date: 08/05/2020
 
-# Installing Package dependencies
+# Installing Package dependencies through the lock.file
 if (!requireNamespace("renv")){
   install.packages('renv')
   renv::restore()
