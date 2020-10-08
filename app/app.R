@@ -12,7 +12,6 @@ if (!requireNamespace("renv")){
 # EXECUTING THE APP
 ## Global
 source('app/global.R')
-abc <- matrix(c(-46.6, -23.5), 1, 2)
 ## UI
 source('app/ui.R')
 ## Server0
