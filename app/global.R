@@ -1,4 +1,12 @@
 # Libraries
+
+# If we wish to install the packages without the help of the renv package.
+# packages <- c('shiny', 'shinydashboard', 'shinyWidgets',
+#               'DT', 'tidyverse', 'tidyselect', 'lubridate',
+#               'sf', 'sp', 'rgdal', 'maptools', 'spatstat',
+#               'plotly', 'leaflet', 'mapview', 'rvest', 'mapsapi')
+# install.packages(packages)
+
 ## App
 library(shiny)
 library(shinydashboard)
@@ -18,7 +26,7 @@ library(spatstat)
 library(plotly)
 library(leaflet)
 library(mapview)
-library(ggthemes)
+#library(ggthemes)
 # Webscrapping
 library(rvest)
 library(mapsapi)

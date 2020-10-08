@@ -10,6 +10,9 @@ source('app/ui.R')
 ## Server
 source('app/server.R')
 
+# Configurations of the server
+options(shiny.port = 3137, shiny.server = '0.0.0.0')
+
 shiny::shinyApp(ui, server)
 
 

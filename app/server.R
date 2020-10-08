@@ -284,9 +284,15 @@ server <- function(input, output) {
       matrix(1,2)
     
     # Prevalence Map
-    v1 <- raster::extract(theft_prevalence_map(), point_adress) %>% round(3) %>% scales::percent()
+    v1 <-
+      raster::extract(theft_prevalence_map(), point_adress) %>%
+      round(3) %>% 
+      scales::percent()
+    
     # Quantity of Thefts 
-    v2 <- raster::extract(spatial_kernel_map(), point_adress) %>% round(3) %>% scales::percent()
+    v2 <- 
+      raster::extract(spatial_kernel_map(), point_adress) %>%
+      round(3)
     
     tibble(`Prevalência` = v1,
            `Quantidade de Assalto` = v2) %>% 
