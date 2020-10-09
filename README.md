@@ -13,7 +13,7 @@ docker run -it -p 3838:3838 adrielmartins/crimemap_sp
 
 Then just acess your local host on port 3838 by typing in your browser `127.0.0.1:3838`, and voila! There should be an app there.
 
-But, if you wish to run in your own computer, first clone this repository. Then, you must have R software installed. Run the R script "setup_docker.R" to install all the dependencies. Se the working directory in R as the "app" directory. Finally, just run the file "app.R".
+But, if you wish to run in your own computer, first clone this repository. Then, you must have R software installed. Run the R script "setup_docker.R" to install all the dependencies. Set the working directory in R as the "app" directory. Finally, just run the file "app.R".
 
 ## Contributing and Future Improvements
 
