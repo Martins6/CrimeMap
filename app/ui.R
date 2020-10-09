@@ -9,9 +9,7 @@ sidebar <- dashboardSidebar(
     # Tab 2 - Neighborhoods
     menuItem("Análise dos Bairros", tabName = "neighborhoods"),
     # Tab 3 - Modelling Theft Data
-    menuItem("Mapeamento de Assalto", tabName = "rob_model"),
-    # Tab 4 - About
-    menuItem("Sobre", tabName = "about")
+    menuItem("Mapeamento de Assalto", tabName = "rob_model")
   )
 )
 ################################### / BODY / ##########################
@@ -145,14 +143,6 @@ body <- dashboardBody(
                   actionButton('go_table_adress_risk', 'Submeter')
               )
             )
-            
-      # End of the Stats Section       
-    ),
-    
-    #####################  About Section #####################
-    tabItem(tabName = "about"
-            
-              
             
       # End of the Stats Section       
     )
