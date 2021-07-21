@@ -2,6 +2,8 @@
 
 An app to visualise, map and predict crime statistics. It serves as a Proof of Concept for future web applications for major cities governments and general public interest. It uses data from the City of São Paulo.
 
+![Exploratory Data Analysis](images/model.png)
+
 ## Usage or installation
 
 I've built a docker image containing the app. If you don't have Docker installed please refer to this [site](https://www.docker.com/) to more information. If you do have Docker installed, just use the following commands in your terminal:
